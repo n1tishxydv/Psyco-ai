@@ -21,12 +21,33 @@ if (isStaging && fs.existsSync(stagingPath)) {
   dotenv.config({ path: path.join(backendRoot, '.env') });
 }
 
+// Compute explicit allowlist for CORS
+const configuredFrontendOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map((url) => url.trim().replace(/\/$/, ''))
+  : ['https://psyco-ai-staging.web.app', 'https://psyco-ai-staging.firebaseapp.com'];
+
+const additionalOrigins = process.env.ADDITIONAL_ALLOWED_ORIGINS
+  ? process.env.ADDITIONAL_ALLOWED_ORIGINS.split(',').map((url) => url.trim().replace(/\/$/, ''))
+  : [];
+
+const allowedOrigins = Array.from(
+  new Set([
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000',
+    ...configuredFrontendOrigins,
+    ...additionalOrigins,
+  ])
+).filter(Boolean);
+
 const config = {
   env: process.env.NODE_ENV || 'development',
   isProduction: process.env.NODE_ENV === 'production',
   port: parseInt(process.env.PORT, 10) || 5000,
   apiPrefix: process.env.API_PREFIX || '/api/v1',
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  frontendUrl: configuredFrontendOrigins[0] || 'http://localhost:5173',
+  allowedOrigins,
 
   defaults: {
     timezone: process.env.DEFAULT_TIMEZONE || 'Asia/Kolkata',

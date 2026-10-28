@@ -1,0 +1,45 @@
+# ==============================================================================
+# PSYCO AI — RENDER DEPLOYMENT BLUEPRINT SPECIFICATION
+# ==============================================================================
+# Free Web Service configuration for Psyco AI Express Backend
+# Secrets are marked sync: false to prevent credential leakage.
+# Configure sensitive values securely in the Render Dashboard.
+# ==============================================================================
+
+services:
+  - type: web
+    name: psyco-ai-api-staging
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: API_PREFIX
+        value: /api/v1
+      - key: DEFAULT_TIMEZONE
+        value: Asia/Kolkata
+      - key: FIREBASE_PROJECT_ID
+        value: psyco-ai-staging
+      - key: FIREBASE_DATABASE_URL
+        value: https://psyco-ai-staging-default-rtdb.firebaseio.com
+      # Sensitive secrets configured securely via Render Dashboard
+      - key: FRONTEND_URL
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ASSEMBLYAI_API_KEY
+        sync: false

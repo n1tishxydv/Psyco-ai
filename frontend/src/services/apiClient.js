@@ -3,9 +3,39 @@
  * Centralized fetch wrapper handling base URL, authorization headers, and error normalization.
  */
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+/**
+ * Resolve the API Base URL.
+ * In development mode, falls back to http://localhost:5000/api/v1 for convenience.
+ * In a deployed/production build, VITE_API_BASE_URL is strictly required; falling back
+ * to localhost is prohibited to prevent silent connection failures.
+ */
+function getApiBaseUrl() {
+  const configuredUrl = import.meta.env.VITE_API_BASE_URL;
+  if (configuredUrl) {
+    return configuredUrl.replace(/\/$/, '');
+  }
+
+  // Allow localhost fallback only in local development
+  if (import.meta.env.DEV) {
+    return 'http://localhost:5000/api/v1';
+  }
+
+  // Deployed build without configured API endpoint
+  return null;
+}
+
+const BASE_URL = getApiBaseUrl();
 
 export async function apiRequest(endpoint, options = {}) {
+  if (!BASE_URL) {
+    const error = new Error(
+      'Psyco AI API Configuration Error: VITE_API_BASE_URL is not configured for this deployed environment. Please configure the backend API endpoint in your build settings.'
+    );
+    error.status = 500;
+    error.code = 'CONFIG_ERROR';
+    throw error;
+  }
+
   const url = `${BASE_URL}${endpoint}`;
   const headers = {
     'Content-Type': 'application/json',
@@ -49,7 +79,9 @@ export async function apiRequest(endpoint, options = {}) {
     // If backend server is unreachable
     if (!err.status) {
       err.code = 'NETWORK_ERROR';
-      err.message = 'Unable to reach the Psyco AI backend server. Please verify the server is running on port 5000.';
+      err.message = import.meta.env.DEV
+        ? 'Unable to reach the Psyco AI backend server. Please verify the local server is running on port 5000.'
+        : 'Unable to reach the Psyco AI backend service. Please check your network connection or verify the backend service is operational.';
     }
     throw err;
   }

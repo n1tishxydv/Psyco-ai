@@ -16,15 +16,20 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// Cross-Origin Resource Sharing
+// Cross-Origin Resource Sharing with explicit configuration allowlist
+const allowedOriginsSet = new Set(config.allowedOrigins);
+
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+    // Allow requests with no origin (e.g. mobile apps, curl, server-to-server, health checks)
     if (!origin) return callback(null, true);
-    if (origin === config.frontendUrl || !config.isProduction) {
+
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    if (allowedOriginsSet.has(normalizedOrigin)) {
       return callback(null, true);
     }
-    return callback(new Error('Blocked by CORS policy'));
+
+    return callback(new Error(`Blocked by CORS policy: Origin '${origin}' is not permitted.`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

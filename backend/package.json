@@ -1,0 +1,37 @@
+{
+  "name": "psyco-ai-backend",
+  "version": "1.0.0",
+  "description": "Psyco AI REST API - Practice Management SaaS for Mental Health Professionals",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "start:staging": "node --env-file=.env.staging src/server.js",
+    "dev": "node --watch src/server.js",
+    "dev:staging": "node --env-file=.env.staging --watch src/server.js",
+    "seed:staging": "node --env-file=.env.staging scripts/seedStagingEnvironment.js",
+    "seed:staging:dry-run": "node --env-file=.env.staging scripts/seedStagingEnvironment.js --dry-run",
+    "test": "node --test src/tests/*.test.js"
+  },
+  "keywords": [
+    "mental-health",
+    "practice-management",
+    "express",
+    "api"
+  ],
+  "author": "Psyco AI Architecture Team",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@google/genai": "^2.30.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "supertest": "^7.0.0"
+  }
+}

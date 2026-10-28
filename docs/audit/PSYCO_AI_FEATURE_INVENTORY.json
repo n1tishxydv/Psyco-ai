@@ -1,0 +1,368 @@
+[
+  {
+    "featureId": "FEAT-001",
+    "phase": "Phase 1",
+    "featureName": "Public Website Landing Page",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "NOT_APPLICABLE",
+    "databaseStatus": "NOT_APPLICABLE",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "frontend/src/features/public/HomePage.jsx",
+      "Live browser subagent navigation to http://localhost:5173",
+      "HTTP 200 clean rendering, responsive glassmorphism styles"
+    ],
+    "defectIds": [],
+    "remainingTasks": []
+  },
+  {
+    "featureId": "FEAT-004",
+    "phase": "Phase 1",
+    "featureName": "Public FAQ & Accordion System",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "frontend/src/features/public/FaqPage.jsx",
+      "backend/src/routes/v1/public.routes.js",
+      "Live browser accordion click verified item expansion",
+      "Unit test public.test.js line 7: GET /api/v1/public/faqs 200"
+    ],
+    "defectIds": ["DEF-DAT-002"],
+    "remainingTasks": ["TASK-G1-02"]
+  },
+  {
+    "featureId": "FEAT-005",
+    "phase": "Phase 1",
+    "featureName": "Public Contact Form & Anti-Spam",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "frontend/src/features/public/ContactPage.jsx",
+      "backend/src/controllers/public.controller.js",
+      "Live browser submission test with validation errors",
+      "Unit test public.test.js line 15: Honeypot drop verified"
+    ],
+    "defectIds": ["DEF-DAT-002"],
+    "remainingTasks": ["TASK-G1-02"]
+  },
+  {
+    "featureId": "FEAT-009",
+    "phase": "Phase 1",
+    "featureName": "Public Clinician Directory & Filters",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "frontend/src/features/directory/PsychologistDirectoryPage.jsx",
+      "backend/src/routes/v1/psychologist.routes.js",
+      "Live browser inspection rendered Dr. Elena Vance and Dr. James Moriarty cards",
+      "GET /api/v1/psychologists returned approved clinicians"
+    ],
+    "defectIds": ["DEF-DAT-002"],
+    "remainingTasks": ["TASK-G1-02"]
+  },
+  {
+    "featureId": "FEAT-010",
+    "phase": "Phase 2",
+    "featureName": "Patient Registration & Onboarding",
+    "status": "PARTIALLY_IMPLEMENTED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "PARTIALLY_VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "SECURITY_DEFECT",
+    "evidence": [
+      "frontend/src/features/auth/RegisterPage.jsx",
+      "backend/src/controllers/profile.controller.js",
+      "backend/src/integrations/firebase/firebaseAuthAdapter.js",
+      "JWT decoded via jwt.decode without signature check"
+    ],
+    "defectIds": ["DEF-SEC-001", "DEF-DAT-002"],
+    "remainingTasks": ["TASK-G1-01", "TASK-G1-02"]
+  },
+  {
+    "featureId": "FEAT-016",
+    "phase": "Phase 2",
+    "featureName": "Role-Based Access Control Guards",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "NOT_APPLICABLE",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "frontend/src/routes/RoleRoute.jsx",
+      "backend/src/middleware/authorization.js",
+      "Unit test pre_phase8_complete_validation.test.js Workflow I: ReBAC 403 Forbidden verified"
+    ],
+    "defectIds": [],
+    "remainingTasks": []
+  },
+  {
+    "featureId": "FEAT-020",
+    "phase": "Phase 3",
+    "featureName": "Dynamic Slot Calculation & Availability",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "frontend/src/features/appointments/BookingPage.jsx",
+      "backend/src/controllers/availability.controller.js",
+      "Unit test phase3.test.js step 3: 50min session + 10min buffer slot calculation verified"
+    ],
+    "defectIds": ["DEF-DAT-002"],
+    "remainingTasks": ["TASK-G1-02"]
+  },
+  {
+    "featureId": "FEAT-021",
+    "phase": "Phase 3",
+    "featureName": "Atomic Double-Booking Prevention",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "backend/src/controllers/appointment.controller.js",
+      "Unit test phase3.test.js step 6: Concurrent booking collision returned HTTP 409 conflict"
+    ],
+    "defectIds": [],
+    "remainingTasks": []
+  },
+  {
+    "featureId": "FEAT-026",
+    "phase": "Phase 3",
+    "featureName": "Google Calendar OAuth Integration",
+    "status": "BLOCKED_BY_CONFIGURATION",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "BLOCKED_BY_CONFIGURATION",
+    "evidence": [
+      "backend/src/integrations/googleCalendar/googleCalendarAdapter.js",
+      "Adapter returns calendarSyncStatus: 'not_connected' when clinician has not completed OAuth consent flow",
+      "Configured with client ID and secret in backend/.env"
+    ],
+    "defectIds": [],
+    "remainingTasks": ["TASK-F02"]
+  },
+  {
+    "featureId": "FEAT-030",
+    "phase": "Phase 4",
+    "featureName": "Administrator Barred from Clinical Records",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "NOT_APPLICABLE",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "backend/src/middleware/authorization.js (blockAdminFromClinicalRecords)",
+      "Unit test phase4.test.js step 11: Admin token accessing /api/v1/clinical/patients/:id/chart rejected with 403 ADMIN_CLINICAL_ACCESS_PROHIBITED"
+    ],
+    "defectIds": [],
+    "remainingTasks": []
+  },
+  {
+    "featureId": "FEAT-032",
+    "phase": "Phase 4",
+    "featureName": "SOAP Clinical Note Editor & Versioned Sign-off",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "frontend/src/features/clinical/SessionWorkspacePage.jsx",
+      "backend/src/services/clinical.service.js",
+      "Unit test phase4.test.js step 4 & 5: Note draft, clinician finalization, and amendment version increment (v1->v2) verified"
+    ],
+    "defectIds": ["DEF-DAT-002"],
+    "remainingTasks": ["TASK-G1-02"]
+  },
+  {
+    "featureId": "FEAT-038",
+    "phase": "Phase 4",
+    "featureName": "Medication Prescription Recording",
+    "status": "IMPLEMENTED_BUT_FAILING",
+    "confidence": "HIGH",
+    "frontendStatus": "PARTIAL",
+    "backendStatus": "FAILING",
+    "databaseStatus": "NOT_APPLICABLE",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "backend/src/controllers/clinical.controller.js line 193",
+      "createPrescriptionRecord missing from clinical.service.js",
+      "POST /api/v1/clinical/prescriptions returns HTTP 500 error"
+    ],
+    "defectIds": ["DEF-CLIN-004"],
+    "remainingTasks": ["TASK-G1-04"]
+  },
+  {
+    "featureId": "FEAT-041",
+    "phase": "Phase 5",
+    "featureName": "AssemblyAI Ephemeral Streaming Token",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "NOT_APPLICABLE",
+    "integrationStatus": "VERIFIED",
+    "evidence": [
+      "backend/src/integrations/assemblyai/assemblyAiAdapter.js",
+      "Live test executed against https://streaming.assemblyai.com/v3/token",
+      "Returned real ephemeral token with isSimulated: false, wsUrl configured"
+    ],
+    "defectIds": [],
+    "remainingTasks": []
+  },
+  {
+    "featureId": "FEAT-043",
+    "phase": "Phase 5",
+    "featureName": "Mandatory Text-Only Storage Policy Invariant",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "VERIFIED",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "backend/src/integrations/firebase/firebaseRtdbAdapter.js (assertValidPayload)",
+      "Strict regex blocking data:(image|audio|video)/[a-zA-Z]+;base64",
+      "5MB hard ceiling on individual JSON payload",
+      "Pre-phase 8 test Workflow J: Passed binary rejection assertions",
+      "Disk audit of rtdb_snapshot.json confirmed 0 binary media files"
+    ],
+    "defectIds": [],
+    "remainingTasks": []
+  },
+  {
+    "featureId": "FEAT-046",
+    "phase": "Phase 6",
+    "featureName": "Google Gemini Clinical Copilot Panel",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "VERIFIED",
+    "evidence": [
+      "frontend/src/features/ai/AiCopilotPanel.jsx",
+      "backend/src/integrations/gemini/geminiAdapter.js",
+      "Live invocation of model gemini-3.8-flash via @google/genai succeeded in <1.2s",
+      "Prompt injection resistance verified against adversarial transcript instructions"
+    ],
+    "defectIds": ["DEF-DAT-002", "DEF-AI-009"],
+    "remainingTasks": ["TASK-G1-02", "TASK-G2-03"]
+  },
+  {
+    "featureId": "FEAT-051",
+    "phase": "Phase 6",
+    "featureName": "Durable Background AI Job Queue",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "NOT_APPLICABLE",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "backend/src/jobs/index.js (DurableJobQueue)",
+      "backend/src/workers/aiWorker.js",
+      "Unit test phase6.test.js step 3 & 4: Asynchronous job lifecycle and crash reconciliation loop verified"
+    ],
+    "defectIds": [],
+    "remainingTasks": []
+  },
+  {
+    "featureId": "FEAT-053",
+    "phase": "Phase 7",
+    "featureName": "PHQ-9 & GAD-7 Psychometric Assessments",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "frontend/src/features/assessments/PatientAssessmentRunnerPage.jsx",
+      "backend/src/services/assessmentScoring.service.js",
+      "Unit test phase7.test.js step 1: Deterministic scoring and Likert scale constraints verified"
+    ],
+    "defectIds": ["DEF-DAT-002", "DEF-FE-006"],
+    "remainingTasks": ["TASK-G1-02", "TASK-G2-01"]
+  },
+  {
+    "featureId": "FEAT-056",
+    "phase": "Phase 7",
+    "featureName": "PHQ-9 Q9 Suicidal Ideation Alert Flag",
+    "status": "PARTIALLY_IMPLEMENTED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "PARTIALLY_VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "backend/src/services/assessment.service.js lines 263-298",
+      "riskReviewFlags record created successfully",
+      "Notification dispatch fails: notificationService.sendNotification is not a function"
+    ],
+    "defectIds": ["DEF-CLIN-003", "DEF-FE-007"],
+    "remainingTasks": ["TASK-G1-03", "TASK-G2-02"]
+  },
+  {
+    "featureId": "FEAT-057",
+    "phase": "Phase 7",
+    "featureName": "Clinical Session Risk Review Gate (HTTP 412)",
+    "status": "IMPLEMENTED_AND_VERIFIED",
+    "confidence": "HIGH",
+    "frontendStatus": "VERIFIED",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "backend/src/services/clinical.service.js (finalizeSession)",
+      "Unit test phase7.test.js step 4: Attempting to finalize session with active risk flag rejected with HTTP 412 UNREVIEWED_RISK_FLAGS_EXIST",
+      "Subsequent clinician acknowledgment unblocked finalization cleanly"
+    ],
+    "defectIds": [],
+    "remainingTasks": []
+  },
+  {
+    "featureId": "FEAT-061",
+    "phase": "Phase 8",
+    "featureName": "Administrator Dashboard Telemetry & Controls",
+    "status": "IMPLEMENTED_BUT_FAILING",
+    "confidence": "HIGH",
+    "frontendStatus": "FAILING",
+    "backendStatus": "VERIFIED",
+    "databaseStatus": "LOCAL_SNAPSHOT_ONLY",
+    "integrationStatus": "NOT_APPLICABLE",
+    "evidence": [
+      "frontend/src/features/admin/AdminDashboard.jsx",
+      "frontend/src/services/adminService.js",
+      "Component calls getPlatformMetrics() which does not exist in adminService.js",
+      "Throws runtime TypeError on load"
+    ],
+    "defectIds": ["DEF-FE-005"],
+    "remainingTasks": ["TASK-G1-05"]
+  }
+]

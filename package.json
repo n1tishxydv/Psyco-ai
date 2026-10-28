@@ -1,0 +1,27 @@
+{
+  "name": "psyco-ai",
+  "version": "1.0.0",
+  "description": "Psyco AI - AI-Powered Mental Health Practice-Management Platform (Phase 0 Foundation)",
+  "private": true,
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:backend:staging": "npm --prefix backend run dev:staging",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:frontend:staging": "npm --prefix frontend run dev -- --mode staging",
+    "build:frontend": "npm --prefix frontend run build",
+    "build:frontend:staging": "npm --prefix frontend run build -- --mode staging",
+    "test:backend": "npm --prefix backend run test",
+    "test": "npm --prefix backend run test",
+    "seed:staging": "npm --prefix backend run seed:staging",
+    "seed:staging:dry-run": "npm --prefix backend run seed:staging:dry-run",
+    "install:all": "npm --prefix backend install && npm --prefix frontend install"
+  },
+  "keywords": [
+    "mental-health",
+    "practice-management",
+    "telehealth",
+    "clinical-psychology"
+  ],
+  "author": "Psyco AI Architecture Team",
+  "license": "UNLICENSED"
+}

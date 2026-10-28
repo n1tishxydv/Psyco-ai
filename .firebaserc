@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "psyco-ai-staging",
+    "staging": "psyco-ai-staging",
+    "production": "psyco-9c13d"
+  }
+}

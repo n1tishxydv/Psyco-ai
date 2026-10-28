@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#111B2B"/>
+  <!-- Left therapeutic speech bubble -->
+  <path d="M7 11C7 8.23858 9.23858 6 12 6H16C18.7614 6 21 8.23858 21 11V14C21 16.7614 18.7614 19 16 19H12L8 23V18.5C7.38241 17.5872 7 16.3533 7 15V11Z" fill="#1D3042" stroke="#2D8276" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- Continuous neural care curve -->
+  <path d="M10 13C12 9.5 15 15.5 18 12C19.5 10.25 21 11.5 22 13" stroke="#79CBB8" stroke-width="2" stroke-linecap="round"/>
+  <!-- Central empathy dot -->
+  <circle cx="16" cy="13.5" r="1.5" fill="#79CBB8"/>
+</svg>

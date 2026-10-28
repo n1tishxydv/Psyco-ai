@@ -1,0 +1,49 @@
+import { Router } from 'express';
+import healthRoutes from './v1/health.routes.js';
+import publicRoutes from './v1/public.routes.js';
+import authRoutes from './v1/auth.routes.js';
+import appointmentRoutes from './v1/appointment.routes.js';
+import patientRoutes from './v1/patient.routes.js';
+import psychologistRoutes from './v1/psychologist.routes.js';
+import sessionRoutes from './v1/session.routes.js';
+import auditRoutes from './v1/audit.routes.js';
+
+import profileRoutes from './v1/profile.routes.js';
+import intakeRoutes from './v1/intake.routes.js';
+import availabilityRoutes from './v1/availability.routes.js';
+import notificationRoutes from './v1/notification.routes.js';
+import googleCalendarRoutes from './v1/googleCalendar.routes.js';
+import clinicalRoutes from './v1/clinical.routes.js';
+import adminRoutes from './v1/admin.routes.js';
+import transcriptionRoutes from './v1/transcription.routes.js';
+import aiRoutes from './v1/ai.routes.js';
+import assessmentRoutes from './v1/assessment.routes.js';
+import analyticsRoutes from './v1/analytics.routes.js';
+import riskReviewRoutes from './v1/riskReview.routes.js';
+import documentationQualityRoutes from './v1/documentationQuality.routes.js';
+
+const router = Router();
+
+router.use('/health', healthRoutes);
+router.use('/public', publicRoutes);
+router.use('/auth', authRoutes);
+router.use('/profile', profileRoutes);
+router.use('/intake', intakeRoutes);
+router.use('/appointments', appointmentRoutes);
+router.use('/availability', availabilityRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/integrations/google', googleCalendarRoutes);
+router.use('/clinical', clinicalRoutes);
+router.use('/transcription', transcriptionRoutes);
+router.use('/ai', aiRoutes);
+router.use('/assessments', assessmentRoutes);
+router.use('/analytics', analyticsRoutes);
+router.use('/risk-review', riskReviewRoutes);
+router.use('/documentation-quality', documentationQualityRoutes);
+router.use('/admin', adminRoutes);
+router.use('/patients', patientRoutes);
+router.use('/psychologists', psychologistRoutes);
+router.use('/sessions', sessionRoutes);
+router.use('/audit', auditRoutes);
+
+export default router;

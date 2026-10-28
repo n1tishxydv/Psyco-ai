@@ -1,0 +1,72 @@
+# ==============================================================================
+# PSYCO AI — MASTER GITIGNORE SPECIFICATION
+# ==============================================================================
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Testing and Coverage
+coverage/
+*.lcov
+.nyc_output/
+
+# Production Builds
+dist/
+build/
+frontend/dist/
+*.tsbuildinfo
+
+# Environment & Secrets (NEVER COMMIT SENSITIVE SECRETS)
+.env
+.env.*
+!.env.example
+!.env.*.example
+.env.local
+.env.staging
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+backend/.env.staging
+frontend/.env
+frontend/.env.staging
+
+# Local Certificates, Keys & Service Account Credentials
+*.pem
+*.key
+*.p12
+*.pfx
+service-account*.json
+*-service-account*.json
+serviceAccountKey.json
+firebase-admin-key*.json
+token.json
+credentials.local.json
+
+# Local Runtime Data, Disk Snapshots, and Backups
+backend/data/*.json
+backend/data/backups/
+*.tmp
+*.bak
+
+# Operator Diagnostic and Live Probe Scratch Scripts
+backend/scripts/test_keys.js
+backend/scripts/validate_calendar_meet_live.js
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# OS & Editor Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo

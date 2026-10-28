@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -41,6 +42,78 @@ const allowedOrigins = Array.from(
   ])
 ).filter(Boolean);
 
+/**
+ * Normalizes and cleans a PEM private key from environment variables.
+ * Automatically removes wrapping quotes (single or double) and converts
+ * escaped newline characters (\\n, \\r\\n) into standard newlines.
+ *
+ * @param {string|undefined} rawKey - The raw private key string
+ * @returns {string|undefined} Normalized PEM key string or undefined
+ */
+export function normalizePrivateKey(rawKey) {
+  if (!rawKey || typeof rawKey !== 'string') {
+    return undefined;
+  }
+
+  let key = rawKey.trim();
+
+  // Strip wrapping single or double quotes that can be introduced by cloud hosting dashboards (Render, Heroku, etc.)
+  while (
+    (key.startsWith('"') && key.endsWith('"')) ||
+    (key.startsWith("'") && key.endsWith("'"))
+  ) {
+    key = key.slice(1, -1).trim();
+  }
+
+  // Normalize escaped linebreaks to true newline characters
+  key = key
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n');
+
+  // Verify basic PEM structure
+  if (!key.includes('BEGIN') || !key.includes('KEY')) {
+    return undefined;
+  }
+
+  // Ensure trailing newline
+  if (!key.endsWith('\n')) {
+    key += '\n';
+  }
+
+  return key;
+}
+
+/**
+ * Validates that a private key is a valid asymmetric key for RS256 signing.
+ *
+ * @param {string|undefined} key - Normalized PEM string
+ * @returns {{ valid: boolean, type?: string, error?: string }}
+ */
+export function validatePrivateKey(key) {
+  if (!key || typeof key !== 'string') {
+    return { valid: false, error: 'Private key is missing or undefined.' };
+  }
+  try {
+    const keyObject = crypto.createPrivateKey(key);
+    if (!keyObject.asymmetricKeyType) {
+      return { valid: false, error: 'Key is not an asymmetric cryptographic key.' };
+    }
+    return { valid: true, type: keyObject.asymmetricKeyType };
+  } catch (err) {
+    return { valid: false, error: err.message };
+  }
+}
+
+const defaultProjectId = process.env.NODE_ENV === 'production' ? 'psyco-9c13d' : 'psyco-ai-staging';
+const defaultDatabaseURL = process.env.NODE_ENV === 'production'
+  ? 'https://psyco-9c13d-default-rtdb.firebaseio.com'
+  : 'https://psyco-ai-staging-default-rtdb.firebaseio.com';
+
+const resolvedProjectId = process.env.FIREBASE_PROJECT_ID || defaultProjectId;
+const resolvedDatabaseURL = process.env.FIREBASE_DATABASE_URL || defaultDatabaseURL;
+
 const config = {
   env: process.env.NODE_ENV || 'development',
   isProduction: process.env.NODE_ENV === 'production',
@@ -56,16 +129,14 @@ const config = {
   },
 
   firebase: {
-    projectId: process.env.FIREBASE_PROJECT_ID || 'psyco-9c13d',
+    projectId: resolvedProjectId,
     apiKey: process.env.FIREBASE_API_KEY,
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY
-      ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
-      : undefined,
-    databaseURL: process.env.FIREBASE_DATABASE_URL || 'https://psyco-9c13d-default-rtdb.firebaseio.com',
+    privateKey: normalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY),
+    databaseURL: resolvedDatabaseURL,
     isConfigured: Boolean(
-      process.env.FIREBASE_PROJECT_ID &&
-      !process.env.FIREBASE_PROJECT_ID.includes('placeholder')
+      resolvedProjectId &&
+      !resolvedProjectId.includes('placeholder')
     ),
   },
 

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
-import config from '../../config/index.js';
+import config, { validatePrivateKey } from '../../config/index.js';
 import { logger } from '../../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,6 +25,8 @@ class FirebaseRtdbAdapter {
     this.memoryStore = new Map();
     this.cachedAccessToken = null;
     this.tokenExpiresAt = 0;
+    this.tokenFailureCooldownUntil = 0;
+    this.lastTokenError = null;
 
     if (!isTestingEnvironment()) {
       this.loadSnapshot();
@@ -90,17 +92,28 @@ class FirebaseRtdbAdapter {
   getStatus() {
     const configured = this.isConfigured();
     const hasServiceAccount = this.hasServiceAccount();
+    const keyValidation = hasServiceAccount ? validatePrivateKey(config.firebase.privateKey) : null;
+    const keyValid = keyValidation ? keyValidation.valid : false;
+
     return {
       service: this.name,
       configured,
       hasServiceAccount,
-      status: hasServiceAccount ? 'CLOUD_AUTHENTICATED' : configured ? 'CLOUD_UNAUTHENTICATED_REST' : 'UNCONFIGURED',
+      status: (hasServiceAccount && keyValid)
+        ? 'CLOUD_AUTHENTICATED'
+        : (hasServiceAccount && !keyValid)
+        ? 'INVALID_PRIVATE_KEY'
+        : configured
+        ? 'CLOUD_UNAUTHENTICATED_REST'
+        : 'UNCONFIGURED',
       databaseURL: config.firebase.databaseURL,
       projectId: config.firebase.projectId,
       storagePolicy: 'STRICT_TEXT_AND_STRUCTURED_JSON_ONLY',
       binaryStorageForbidden: true,
-      message: hasServiceAccount
+      message: (hasServiceAccount && keyValid)
         ? `Firebase Realtime Database configured with service account at ${config.firebase.databaseURL}.`
+        : (hasServiceAccount && !keyValid)
+        ? `Firebase Realtime Database service account credentials provided, but FIREBASE_PRIVATE_KEY is invalid (${keyValidation?.error}).`
         : configured
         ? `Firebase Realtime Database URL set (${config.firebase.databaseURL}), but service account credentials (FIREBASE_CLIENT_EMAIL/FIREBASE_PRIVATE_KEY) are missing. Operating in verified local snapshot mode.`
         : 'Firebase Realtime Database URL not configured.',
@@ -108,7 +121,8 @@ class FirebaseRtdbAdapter {
   }
 
   /**
-   * Generates a Google OAuth2 access token using service account credentials
+   * Generates a Google OAuth2 access token using service account credentials.
+   * Features 30-second error cooldown to prevent log flooding.
    */
   async getServiceAccountAccessToken() {
     if (!this.hasServiceAccount()) {
@@ -120,7 +134,20 @@ class FirebaseRtdbAdapter {
       return this.cachedAccessToken;
     }
 
+    // Cooldown check: avoid hammering Google OAuth endpoint and flooding logs
+    if (this.tokenFailureCooldownUntil && now < this.tokenFailureCooldownUntil) {
+      const remainingSec = this.tokenFailureCooldownUntil - now;
+      throw new Error(
+        `Firebase RTDB service account authentication in cooldown (${remainingSec}s remaining). Previous error: ${this.lastTokenError}`
+      );
+    }
+
     try {
+      const keyValidation = validatePrivateKey(config.firebase.privateKey);
+      if (!keyValidation.valid) {
+        throw new Error(`Asymmetric private key validation failed: ${keyValidation.error}`);
+      }
+
       const payload = {
         iss: config.firebase.clientEmail,
         sub: config.firebase.clientEmail,
@@ -139,6 +166,7 @@ class FirebaseRtdbAdapter {
           grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
           assertion,
         }),
+        signal: AbortSignal.timeout(8000),
       });
 
       if (!response.ok) {
@@ -147,12 +175,20 @@ class FirebaseRtdbAdapter {
       }
 
       const tokenData = await response.json();
+      if (!tokenData.access_token) {
+        throw new Error('Google OAuth2 token response did not contain access_token.');
+      }
+
       this.cachedAccessToken = tokenData.access_token;
       this.tokenExpiresAt = now + (tokenData.expires_in || 3600);
+      this.tokenFailureCooldownUntil = 0;
+      this.lastTokenError = null;
       return this.cachedAccessToken;
     } catch (err) {
+      this.tokenFailureCooldownUntil = now + 30; // 30-second backoff cooldown
+      this.lastTokenError = err.message;
       logger.error('Failed to obtain Google OAuth2 access token for Firebase RTDB:', err.message);
-      return null;
+      throw new Error(`Failed to obtain Google OAuth2 access token for Firebase RTDB: ${err.message}`);
     }
   }
 
@@ -230,7 +266,11 @@ class FirebaseRtdbAdapter {
     // 4. Query Firebase Realtime Database REST API if configured
     if (this.isConfigured() && !isTestingEnvironment()) {
       try {
-        const accessToken = await this.getServiceAccountAccessToken();
+        let accessToken = null;
+        if (this.hasServiceAccount()) {
+          accessToken = await this.getServiceAccountAccessToken();
+        }
+
         const headers = { 'Content-Type': 'application/json' };
         if (accessToken) {
           headers['Authorization'] = `Bearer ${accessToken}`;
@@ -260,6 +300,10 @@ class FirebaseRtdbAdapter {
     this.assertValidPayload(data);
     const cleanPath = path.replace(/^\/|\/$/g, '');
 
+    const previousValue = this.memoryStore.has(cleanPath)
+      ? JSON.parse(JSON.stringify(this.memoryStore.get(cleanPath)))
+      : undefined;
+
     // Clone and save to local memory store
     this.memoryStore.set(cleanPath, JSON.parse(JSON.stringify(data)));
 
@@ -285,7 +329,14 @@ class FirebaseRtdbAdapter {
     // Sync to live Firebase Realtime Database
     if (this.isConfigured() && !isTestingEnvironment()) {
       try {
-        const accessToken = await this.getServiceAccountAccessToken();
+        let accessToken = null;
+        if (this.hasServiceAccount()) {
+          accessToken = await this.getServiceAccountAccessToken();
+          if (!accessToken) {
+            throw new Error('Service account configured but access token could not be obtained.');
+          }
+        }
+
         const headers = { 'Content-Type': 'application/json' };
         if (accessToken) {
           headers['Authorization'] = `Bearer ${accessToken}`;
@@ -301,12 +352,28 @@ class FirebaseRtdbAdapter {
         if (!res.ok) {
           const errText = await res.text().catch(() => '');
           logger.warn(`RTDB remote write failed with status ${res.status} for path ${cleanPath}: ${errText}`);
+          // Rollback local memoryStore to maintain consistency
+          if (previousValue === undefined) {
+            this.memoryStore.delete(cleanPath);
+          } else {
+            this.memoryStore.set(cleanPath, previousValue);
+          }
+          this.saveSnapshot();
+
           if (this.hasServiceAccount() && !isTestingEnvironment()) {
             throw new Error(`Cloud database write failed (HTTP ${res.status}): ${errText || 'Remote write rejected'}`);
           }
         }
       } catch (err) {
         logger.warn(`RTDB network write exception for ${cleanPath}: ${err.message}`);
+        // Rollback local memoryStore on exception
+        if (previousValue === undefined) {
+          this.memoryStore.delete(cleanPath);
+        } else {
+          this.memoryStore.set(cleanPath, previousValue);
+        }
+        this.saveSnapshot();
+
         if (this.hasServiceAccount() && !isTestingEnvironment()) {
           throw new Error(`Firebase Realtime Database operation failed: ${err.message}`);
         }
@@ -327,6 +394,10 @@ class FirebaseRtdbAdapter {
 
   async remove(path) {
     const cleanPath = path.replace(/^\/|\/$/g, '');
+    const previousValue = this.memoryStore.has(cleanPath)
+      ? JSON.parse(JSON.stringify(this.memoryStore.get(cleanPath)))
+      : undefined;
+
     this.memoryStore.delete(cleanPath);
 
     const prefix = `${cleanPath}/`;
@@ -340,7 +411,14 @@ class FirebaseRtdbAdapter {
 
     if (this.isConfigured() && !isTestingEnvironment()) {
       try {
-        const accessToken = await this.getServiceAccountAccessToken();
+        let accessToken = null;
+        if (this.hasServiceAccount()) {
+          accessToken = await this.getServiceAccountAccessToken();
+          if (!accessToken) {
+            throw new Error('Service account configured but access token could not be obtained.');
+          }
+        }
+
         const headers = {};
         if (accessToken) {
           headers['Authorization'] = `Bearer ${accessToken}`;
@@ -350,12 +428,20 @@ class FirebaseRtdbAdapter {
         if (!res.ok) {
           const errText = await res.text().catch(() => '');
           logger.warn(`RTDB delete error for ${cleanPath} (HTTP ${res.status}): ${errText}`);
+          if (previousValue !== undefined) {
+            this.memoryStore.set(cleanPath, previousValue);
+            this.saveSnapshot();
+          }
           if (this.hasServiceAccount() && !isTestingEnvironment()) {
             throw new Error(`Cloud database delete failed (HTTP ${res.status}): ${errText || 'Remote delete rejected'}`);
           }
         }
       } catch (err) {
         logger.warn(`RTDB delete error for ${cleanPath}: ${err.message}`);
+        if (previousValue !== undefined) {
+          this.memoryStore.set(cleanPath, previousValue);
+          this.saveSnapshot();
+        }
         if (this.hasServiceAccount() && !isTestingEnvironment()) {
           throw new Error(`Firebase Realtime Database delete failed: ${err.message}`);
         }

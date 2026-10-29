@@ -106,6 +106,69 @@ export function validatePrivateKey(key) {
   }
 }
 
+/**
+ * Extracts the Google Cloud project ID from a service account client email.
+ * e.g., 'firebase-adminsdk-fbsvc@psyco-ai-staging.iam.gserviceaccount.com' -> 'psyco-ai-staging'
+ *
+ * @param {string|undefined} email - Service account client email
+ * @returns {string|null} Extracted project ID or null
+ */
+export function extractProjectIdFromServiceAccountEmail(email) {
+  if (!email || typeof email !== 'string') return null;
+  const match = email.match(/@([^.]+)\.iam\.gserviceaccount\.com$/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Extracts the Firebase project/database name from a Firebase Realtime Database URL.
+ * e.g., 'https://psyco-ai-staging-default-rtdb.firebaseio.com' -> 'psyco-ai-staging'
+ *
+ * @param {string|undefined} url - Realtime database URL
+ * @returns {string|null} Extracted database project name or null
+ */
+export function extractProjectIdFromDatabaseURL(url) {
+  if (!url || typeof url !== 'string') return null;
+  const match = url.match(/https:\/\/([a-zA-Z0-9-]+?)(?:-default-rtdb)?\.firebaseio\.com/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Validates cross-project alignment among the configured project ID, service account email, and database URL.
+ * Ensures tokens signed by a service account for project A are not erroneously sent to database for project B.
+ *
+ * @param {{ projectId?: string, clientEmail?: string, databaseURL?: string }} params
+ * @returns {{ valid: boolean, emailProject: string|null, dbProject: string|null, projectId: string|null, errors: string[] }}
+ */
+export function validateFirebaseProjectAlignment({ projectId, clientEmail, databaseURL } = {}) {
+  const emailProject = extractProjectIdFromServiceAccountEmail(clientEmail);
+  const dbProject = extractProjectIdFromDatabaseURL(databaseURL);
+
+  const errors = [];
+  if (emailProject && projectId && emailProject !== projectId) {
+    errors.push(
+      `Service account email project (${emailProject}) does not match configured project ID (${projectId}).`
+    );
+  }
+  if (dbProject && projectId && dbProject !== projectId) {
+    errors.push(
+      `Database URL target project (${dbProject}) does not match configured project ID (${projectId}).`
+    );
+  }
+  if (emailProject && dbProject && emailProject !== dbProject) {
+    errors.push(
+      `Service account email project (${emailProject}) does not match target database URL project (${dbProject}). This causes Google OAuth tokens to be rejected with HTTP 401 Unauthorized.`
+    );
+  }
+
+  return {
+    valid: errors.length === 0,
+    emailProject,
+    dbProject,
+    projectId: projectId || null,
+    errors,
+  };
+}
+
 const defaultProjectId = process.env.NODE_ENV === 'production' ? 'psyco-9c13d' : 'psyco-ai-staging';
 const defaultDatabaseURL = process.env.NODE_ENV === 'production'
   ? 'https://psyco-9c13d-default-rtdb.firebaseio.com'
@@ -134,6 +197,11 @@ const config = {
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     privateKey: normalizePrivateKey(process.env.FIREBASE_PRIVATE_KEY),
     databaseURL: resolvedDatabaseURL,
+    alignment: validateFirebaseProjectAlignment({
+      projectId: resolvedProjectId,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      databaseURL: resolvedDatabaseURL,
+    }),
     isConfigured: Boolean(
       resolvedProjectId &&
       !resolvedProjectId.includes('placeholder')

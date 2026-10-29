@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
-import config, { validatePrivateKey } from '../../config/index.js';
+import config, { validatePrivateKey, validateFirebaseProjectAlignment } from '../../config/index.js';
 import { logger } from '../../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -94,24 +94,38 @@ class FirebaseRtdbAdapter {
     const hasServiceAccount = this.hasServiceAccount();
     const keyValidation = hasServiceAccount ? validatePrivateKey(config.firebase.privateKey) : null;
     const keyValid = keyValidation ? keyValidation.valid : false;
+    const alignment = validateFirebaseProjectAlignment({
+      projectId: config.firebase.projectId,
+      clientEmail: config.firebase.clientEmail,
+      databaseURL: config.firebase.databaseURL,
+    });
+
+    const status = (hasServiceAccount && keyValid && alignment.valid)
+      ? 'CLOUD_AUTHENTICATED'
+      : (hasServiceAccount && !alignment.valid)
+      ? 'PROJECT_MISMATCH'
+      : (hasServiceAccount && !keyValid)
+      ? 'INVALID_PRIVATE_KEY'
+      : configured
+      ? 'CLOUD_UNAUTHENTICATED_REST'
+      : 'UNCONFIGURED';
 
     return {
       service: this.name,
       configured,
       hasServiceAccount,
-      status: (hasServiceAccount && keyValid)
-        ? 'CLOUD_AUTHENTICATED'
-        : (hasServiceAccount && !keyValid)
-        ? 'INVALID_PRIVATE_KEY'
-        : configured
-        ? 'CLOUD_UNAUTHENTICATED_REST'
-        : 'UNCONFIGURED',
+      status,
       databaseURL: config.firebase.databaseURL,
       projectId: config.firebase.projectId,
+      serviceAccountProject: alignment.emailProject,
+      databaseProject: alignment.dbProject,
+      alignmentValid: alignment.valid,
       storagePolicy: 'STRICT_TEXT_AND_STRUCTURED_JSON_ONLY',
       binaryStorageForbidden: true,
-      message: (hasServiceAccount && keyValid)
+      message: (hasServiceAccount && keyValid && alignment.valid)
         ? `Firebase Realtime Database configured with service account at ${config.firebase.databaseURL}.`
+        : (hasServiceAccount && !alignment.valid)
+        ? `Firebase project mismatch: ${alignment.errors.join(' ')}`
         : (hasServiceAccount && !keyValid)
         ? `Firebase Realtime Database service account credentials provided, but FIREBASE_PRIVATE_KEY is invalid (${keyValidation?.error}).`
         : configured
@@ -123,6 +137,7 @@ class FirebaseRtdbAdapter {
   /**
    * Generates a Google OAuth2 access token using service account credentials.
    * Features 30-second error cooldown to prevent log flooding.
+   * Produces safe, non-sensitive diagnostic logs distinguishing every failure mode.
    */
   async getServiceAccountAccessToken() {
     if (!this.hasServiceAccount()) {
@@ -142,12 +157,33 @@ class FirebaseRtdbAdapter {
       );
     }
 
-    try {
-      const keyValidation = validatePrivateKey(config.firebase.privateKey);
-      if (!keyValidation.valid) {
-        throw new Error(`Asymmetric private key validation failed: ${keyValidation.error}`);
-      }
+    // 1. Private-key validation
+    const keyValidation = validatePrivateKey(config.firebase.privateKey);
+    if (!keyValidation.valid) {
+      const diagMsg = `[DIAGNOSTIC] Private-key validation failure: ${keyValidation.error}. Ensure FIREBASE_PRIVATE_KEY is a valid PEM RSA private key.`;
+      this.tokenFailureCooldownUntil = now + 30;
+      this.lastTokenError = diagMsg;
+      logger.error(diagMsg);
+      throw new Error(diagMsg);
+    }
 
+    // 2. Cross-project credential alignment validation
+    const alignment = validateFirebaseProjectAlignment({
+      projectId: config.firebase.projectId,
+      clientEmail: config.firebase.clientEmail,
+      databaseURL: config.firebase.databaseURL,
+    });
+    if (!alignment.valid) {
+      const diagMsg = `[DIAGNOSTIC] Cross-project credential mismatch: ${alignment.errors.join(' ')}`;
+      this.tokenFailureCooldownUntil = now + 30;
+      this.lastTokenError = diagMsg;
+      logger.error(diagMsg);
+      throw new Error(diagMsg);
+    }
+
+    // 3. JWT Signing
+    let assertion;
+    try {
       const payload = {
         iss: config.firebase.clientEmail,
         sub: config.firebase.clientEmail,
@@ -156,10 +192,19 @@ class FirebaseRtdbAdapter {
         iat: now,
         exp: now + 3600,
       };
+      assertion = jwt.sign(payload, config.firebase.privateKey, { algorithm: 'RS256' });
+    } catch (jwtErr) {
+      const diagMsg = `[DIAGNOSTIC] JWT signing failure: ${jwtErr.message}. Failed to sign assertion for service account (${alignment.emailProject || 'unknown'}).`;
+      this.tokenFailureCooldownUntil = now + 30;
+      this.lastTokenError = diagMsg;
+      logger.error(diagMsg);
+      throw new Error(diagMsg);
+    }
 
-      const assertion = jwt.sign(payload, config.firebase.privateKey, { algorithm: 'RS256' });
-
-      const response = await fetch('https://oauth2.googleapis.com/token', {
+    // 4. OAuth Token Exchange
+    let response;
+    try {
+      response = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -168,28 +213,48 @@ class FirebaseRtdbAdapter {
         }),
         signal: AbortSignal.timeout(8000),
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Google OAuth2 token endpoint returned HTTP ${response.status}: ${errorText}`);
-      }
-
-      const tokenData = await response.json();
-      if (!tokenData.access_token) {
-        throw new Error('Google OAuth2 token response did not contain access_token.');
-      }
-
-      this.cachedAccessToken = tokenData.access_token;
-      this.tokenExpiresAt = now + (tokenData.expires_in || 3600);
-      this.tokenFailureCooldownUntil = 0;
-      this.lastTokenError = null;
-      return this.cachedAccessToken;
-    } catch (err) {
-      this.tokenFailureCooldownUntil = now + 30; // 30-second backoff cooldown
-      this.lastTokenError = err.message;
-      logger.error('Failed to obtain Google OAuth2 access token for Firebase RTDB:', err.message);
-      throw new Error(`Failed to obtain Google OAuth2 access token for Firebase RTDB: ${err.message}`);
+    } catch (netErr) {
+      const diagMsg = `[DIAGNOSTIC] OAuth token-exchange network failure: ${netErr.message}`;
+      this.tokenFailureCooldownUntil = now + 30;
+      this.lastTokenError = diagMsg;
+      logger.error(diagMsg);
+      throw new Error(diagMsg);
     }
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      const diagMsg = `[DIAGNOSTIC] OAuth token-exchange failure: Google OAuth2 endpoint returned HTTP ${response.status} (${errorText}).`;
+      this.tokenFailureCooldownUntil = now + 30;
+      this.lastTokenError = diagMsg;
+      logger.error(diagMsg);
+      throw new Error(diagMsg);
+    }
+
+    let tokenData;
+    try {
+      tokenData = await response.json();
+    } catch (parseErr) {
+      const diagMsg = `[DIAGNOSTIC] OAuth token-exchange failure: Failed to parse Google OAuth2 response JSON: ${parseErr.message}`;
+      this.tokenFailureCooldownUntil = now + 30;
+      this.lastTokenError = diagMsg;
+      logger.error(diagMsg);
+      throw new Error(diagMsg);
+    }
+
+    // 5. Missing Access Token Check
+    if (!tokenData || !tokenData.access_token) {
+      const diagMsg = `[DIAGNOSTIC] Missing access token: Google OAuth2 endpoint response did not contain access_token.`;
+      this.tokenFailureCooldownUntil = now + 30;
+      this.lastTokenError = diagMsg;
+      logger.error(diagMsg);
+      throw new Error(diagMsg);
+    }
+
+    this.cachedAccessToken = tokenData.access_token;
+    this.tokenExpiresAt = now + (tokenData.expires_in || 3600);
+    this.tokenFailureCooldownUntil = 0;
+    this.lastTokenError = null;
+    return this.cachedAccessToken;
   }
 
   /**
@@ -351,7 +416,36 @@ class FirebaseRtdbAdapter {
         });
         if (!res.ok) {
           const errText = await res.text().catch(() => '');
-          logger.warn(`RTDB remote write failed with status ${res.status} for path ${cleanPath}: ${errText}`);
+
+          // Clear cached token on 401 to prevent reusing an expired or rejected token
+          if (res.status === 401) {
+            this.cachedAccessToken = null;
+            this.tokenExpiresAt = 0;
+          }
+
+          const alignment = validateFirebaseProjectAlignment({
+            projectId: config.firebase.projectId,
+            clientEmail: config.firebase.clientEmail,
+            databaseURL: config.firebase.databaseURL,
+          });
+
+          if (res.status === 401 && /unauthorized request/i.test(errText)) {
+            logger.error(
+              `[DIAGNOSTIC] RTDB authentication rejection (HTTP 401 Unauthorized) for path ${cleanPath}. ` +
+              `Google rejected access token credentials for target database. ` +
+              `Verify that service account (${alignment.emailProject || 'unknown'}) matches database target (${alignment.dbProject || 'unknown'}). ` +
+              `Response: ${errText}`
+            );
+          } else if ((res.status === 401 || res.status === 403) && /permission denied/i.test(errText)) {
+            logger.error(
+              `[DIAGNOSTIC] RTDB authorization rejection (HTTP ${res.status} Permission denied) for path ${cleanPath}. ` +
+              `Firebase Realtime Database security rules rejected this operation. ` +
+              `Response: ${errText}`
+            );
+          } else {
+            logger.warn(`RTDB remote write failed with status ${res.status} for path ${cleanPath}: ${errText}`);
+          }
+
           // Rollback local memoryStore to maintain consistency
           if (previousValue === undefined) {
             this.memoryStore.delete(cleanPath);
@@ -427,7 +521,33 @@ class FirebaseRtdbAdapter {
         const res = await fetch(url, { method: 'DELETE', headers, signal: AbortSignal.timeout(4000) });
         if (!res.ok) {
           const errText = await res.text().catch(() => '');
-          logger.warn(`RTDB delete error for ${cleanPath} (HTTP ${res.status}): ${errText}`);
+
+          if (res.status === 401) {
+            this.cachedAccessToken = null;
+            this.tokenExpiresAt = 0;
+          }
+
+          const alignment = validateFirebaseProjectAlignment({
+            projectId: config.firebase.projectId,
+            clientEmail: config.firebase.clientEmail,
+            databaseURL: config.firebase.databaseURL,
+          });
+
+          if (res.status === 401 && /unauthorized request/i.test(errText)) {
+            logger.error(
+              `[DIAGNOSTIC] RTDB authentication rejection (HTTP 401 Unauthorized) on delete for path ${cleanPath}. ` +
+              `Verify that service account (${alignment.emailProject || 'unknown'}) matches database target (${alignment.dbProject || 'unknown'}). ` +
+              `Response: ${errText}`
+            );
+          } else if ((res.status === 401 || res.status === 403) && /permission denied/i.test(errText)) {
+            logger.error(
+              `[DIAGNOSTIC] RTDB authorization rejection (HTTP ${res.status} Permission denied) on delete for path ${cleanPath}. ` +
+              `Response: ${errText}`
+            );
+          } else {
+            logger.warn(`RTDB delete error for ${cleanPath} (HTTP ${res.status}): ${errText}`);
+          }
+
           if (previousValue !== undefined) {
             this.memoryStore.set(cleanPath, previousValue);
             this.saveSnapshot();

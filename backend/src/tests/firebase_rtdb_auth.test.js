@@ -2,7 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import config, { normalizePrivateKey, validatePrivateKey } from '../config/index.js';
+import config, {
+  normalizePrivateKey,
+  validatePrivateKey,
+  extractProjectIdFromServiceAccountEmail,
+  extractProjectIdFromDatabaseURL,
+  validateFirebaseProjectAlignment,
+} from '../config/index.js';
 import { firebaseRtdbAdapter } from '../integrations/firebase/firebaseRtdbAdapter.js';
 
 test('Firebase RTDB Authentication & Key Normalization Test Suite', async (t) => {
@@ -100,7 +106,7 @@ test('Firebase RTDB Authentication & Key Normalization Test Suite', async (t) =>
         async () => {
           await firebaseRtdbAdapter.getServiceAccountAccessToken();
         },
-        /Failed to obtain Google OAuth2 access token/
+        /Private-key validation failure/
       );
 
       assert.ok(firebaseRtdbAdapter.tokenFailureCooldownUntil > Math.floor(Date.now() / 1000));
@@ -140,5 +146,88 @@ test('Firebase RTDB Authentication & Key Normalization Test Suite', async (t) =>
 
     assert.equal(nonProdProj, 'psyco-ai-staging');
     assert.equal(nonProdUrl, 'https://psyco-ai-staging-default-rtdb.firebaseio.com');
+  });
+
+  await t.test('10. Project extraction helpers: Parse project IDs from email and RTDB URLs', () => {
+    const stagingEmail = 'firebase-adminsdk-fbsvc@psyco-ai-staging.iam.gserviceaccount.com';
+    const prodEmail = 'firebase-adminsdk-fbsvc@psyco-9c13d.iam.gserviceaccount.com';
+    assert.equal(extractProjectIdFromServiceAccountEmail(stagingEmail), 'psyco-ai-staging');
+    assert.equal(extractProjectIdFromServiceAccountEmail(prodEmail), 'psyco-9c13d');
+    assert.equal(extractProjectIdFromServiceAccountEmail('plain@example.com'), null);
+
+    const stagingDb = 'https://psyco-ai-staging-default-rtdb.firebaseio.com';
+    const prodDb = 'https://psyco-9c13d-default-rtdb.firebaseio.com';
+    assert.equal(extractProjectIdFromDatabaseURL(stagingDb), 'psyco-ai-staging');
+    assert.equal(extractProjectIdFromDatabaseURL(prodDb), 'psyco-9c13d');
+    assert.equal(extractProjectIdFromDatabaseURL('https://custom.example.com'), null);
+  });
+
+  await t.test('11. validateFirebaseProjectAlignment: Detects cross-project credential mismatch', () => {
+    // Matching staging configuration
+    const matchResult = validateFirebaseProjectAlignment({
+      projectId: 'psyco-ai-staging',
+      clientEmail: 'firebase-adminsdk-fbsvc@psyco-ai-staging.iam.gserviceaccount.com',
+      databaseURL: 'https://psyco-ai-staging-default-rtdb.firebaseio.com',
+    });
+    assert.equal(matchResult.valid, true);
+    assert.equal(matchResult.errors.length, 0);
+
+    // Mismatched configuration: Production service account on Staging database
+    const mismatchResult = validateFirebaseProjectAlignment({
+      projectId: 'psyco-ai-staging',
+      clientEmail: 'firebase-adminsdk-fbsvc@psyco-9c13d.iam.gserviceaccount.com',
+      databaseURL: 'https://psyco-ai-staging-default-rtdb.firebaseio.com',
+    });
+    assert.equal(mismatchResult.valid, false);
+    assert.ok(mismatchResult.errors.length >= 2);
+    assert.ok(mismatchResult.errors.some(e => e.includes('HTTP 401 Unauthorized')));
+  });
+
+  await t.test('12. Firebase RTDB Adapter: getStatus reports PROJECT_MISMATCH on cross-project credentials', () => {
+    const originalEmail = config.firebase.clientEmail;
+    const originalProj = config.firebase.projectId;
+    const originalDb = config.firebase.databaseURL;
+    try {
+      config.firebase.projectId = 'psyco-ai-staging';
+      config.firebase.databaseURL = 'https://psyco-ai-staging-default-rtdb.firebaseio.com';
+      config.firebase.clientEmail = 'firebase-adminsdk-fbsvc@psyco-9c13d.iam.gserviceaccount.com';
+      const status = firebaseRtdbAdapter.getStatus();
+      assert.equal(status.status, 'PROJECT_MISMATCH');
+      assert.equal(status.alignmentValid, false);
+      assert.ok(status.message.includes('Firebase project mismatch'));
+    } finally {
+      config.firebase.clientEmail = originalEmail;
+      config.firebase.projectId = originalProj;
+      config.firebase.databaseURL = originalDb;
+    }
+  });
+
+  await t.test('13. Firebase RTDB Adapter: getServiceAccountAccessToken rejects token when project mismatch occurs', async () => {
+    const originalEmail = config.firebase.clientEmail;
+    const originalKey = config.firebase.privateKey;
+    const originalProj = config.firebase.projectId;
+    const originalDb = config.firebase.databaseURL;
+    try {
+      config.firebase.projectId = 'psyco-ai-staging';
+      config.firebase.databaseURL = 'https://psyco-ai-staging-default-rtdb.firebaseio.com';
+      config.firebase.clientEmail = 'firebase-adminsdk-fbsvc@psyco-9c13d.iam.gserviceaccount.com';
+      config.firebase.privateKey = rawPem;
+      firebaseRtdbAdapter.tokenFailureCooldownUntil = 0;
+      firebaseRtdbAdapter.cachedAccessToken = null;
+
+      await assert.rejects(
+        async () => {
+          await firebaseRtdbAdapter.getServiceAccountAccessToken();
+        },
+        /Cross-project credential mismatch/
+      );
+    } finally {
+      config.firebase.clientEmail = originalEmail;
+      config.firebase.privateKey = originalKey;
+      config.firebase.projectId = originalProj;
+      config.firebase.databaseURL = originalDb;
+      firebaseRtdbAdapter.tokenFailureCooldownUntil = 0;
+      firebaseRtdbAdapter.cachedAccessToken = null;
+    }
   });
 });

@@ -3,12 +3,21 @@ import config from './config/index.js';
 import { logger } from './utils/logger.js';
 import { startWorker, stopWorker } from './workers/aiWorker.js';
 
+import { firebaseRtdbAdapter } from './integrations/firebase/firebaseRtdbAdapter.js';
+
 const HOST = '0.0.0.0';
 
 const server = app.listen(config.port, HOST, () => {
   logger.info(`Psyco AI Backend Server started on port ${config.port} (${HOST}) [${config.env}]`);
   logger.info(`API endpoints mounted at: ${config.apiPrefix}`);
   logger.info(`Health check available at: ${config.apiPrefix}/health`);
+
+  const rtdbStatus = firebaseRtdbAdapter.getStatus();
+  if (rtdbStatus.status === 'PROJECT_MISMATCH') {
+    logger.error(`[STARTUP CONFIG WARNING] ${rtdbStatus.message}`);
+  } else {
+    logger.info(`Firebase RTDB Status: ${rtdbStatus.status} [Target: ${rtdbStatus.databaseURL}]`);
+  }
 
   // Start background worker for asynchronous AI documentation jobs
   startWorker();

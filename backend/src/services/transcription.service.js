@@ -3,6 +3,7 @@ import { assemblyaiAdapter } from '../integrations/assemblyai/assemblyaiAdapter.
 import { googleMeetAdapter } from '../integrations/googleMeet/googleMeetAdapter.js';
 import { auditService } from './audit.service.js';
 import { logger } from '../utils/logger.js';
+import config from '../config/index.js';
 import crypto from 'crypto';
 
 export const transcriptionService = {
@@ -193,7 +194,14 @@ export const transcriptionService = {
       userId: psychologistId,
       userRole: 'psychologist',
       targetId: transcript.id,
-      details: { sessionId, isSimulated: tokenData.isSimulated },
+      details: {
+        sessionId,
+        isSimulated: tokenData.isSimulated,
+        isSandbox: Boolean(tokenData.isSandbox),
+        providerMode: tokenData.provider || (config.aiSandbox?.assemblyaiLiveEnabled ? 'live' : 'mock'),
+        sandboxMode: Boolean(config.aiSandbox?.sandboxMode),
+        status: 'success',
+      },
     });
 
     return {
@@ -203,6 +211,9 @@ export const transcriptionService = {
       sessionId,
       expiresInSeconds: tokenData.expiresInSeconds,
       isSimulated: tokenData.isSimulated,
+      isSandbox: Boolean(tokenData.isSandbox),
+      sandboxMode: Boolean(config.aiSandbox?.sandboxMode),
+      provider: tokenData.provider || 'mock',
     };
   },
 

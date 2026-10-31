@@ -97,6 +97,35 @@ const SettingsPage = lazy(() =>
   import('../features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage }))
 );
 
+// Lazy-Loaded Legal, Privacy & Documentation Pages
+const DocumentationCentrePage = lazy(() =>
+  import('../features/public/DocumentationCentrePage').then((m) => ({ default: m.DocumentationCentrePage }))
+);
+const CookiePolicyPage = lazy(() =>
+  import('../features/public/CookiePolicyPage').then((m) => ({ default: m.CookiePolicyPage }))
+);
+const AiTransparencyPage = lazy(() =>
+  import('../features/public/AiTransparencyPage').then((m) => ({ default: m.AiTransparencyPage }))
+);
+const MedicalDisclaimerPage = lazy(() =>
+  import('../features/public/MedicalDisclaimerPage').then((m) => ({ default: m.MedicalDisclaimerPage }))
+);
+const DataRetentionPolicyPage = lazy(() =>
+  import('../features/public/DataRetentionPolicyPage').then((m) => ({ default: m.DataRetentionPolicyPage }))
+);
+const AcceptableUsePage = lazy(() =>
+  import('../features/public/AcceptableUsePage').then((m) => ({ default: m.AcceptableUsePage }))
+);
+const AccessibilityPage = lazy(() =>
+  import('../features/public/AccessibilityPage').then((m) => ({ default: m.AccessibilityPage }))
+);
+const PrivacyRequestsPage = lazy(() =>
+  import('../features/public/PrivacyRequestsPage').then((m) => ({ default: m.PrivacyRequestsPage }))
+);
+const AdminGuidePage = lazy(() =>
+  import('../features/public/AdminGuidePage').then((m) => ({ default: m.AdminGuidePage }))
+);
+
 // 404 Not Found Page
 import { EmptyState } from '../components/common/EmptyState';
 import { FileQuestion } from 'lucide-react';
@@ -139,17 +168,30 @@ export function AppRoutes() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/get-started" element={<GetStartedPage />} />
 
-        {/* Portal Information Pages */}
+        {/* Portal Information & Guides */}
         <Route path="/for-patients" element={<PatientPortalInfoPage />} />
         <Route path="/patient-portal" element={<Navigate to="/for-patients" replace />} />
+        <Route path="/patient-guide" element={<Navigate to="/for-patients" replace />} />
         <Route path="/for-psychologists" element={<PsychologistPortalInfoPage />} />
         <Route path="/psychologist-portal" element={<Navigate to="/for-psychologists" replace />} />
+        <Route path="/psychologist-guide" element={<Navigate to="/for-psychologists" replace />} />
+        <Route path="/admin-guide" element={<AdminGuidePage />} />
 
-        {/* Legal & Data Privacy Routes */}
+        {/* Central Documentation Centre & Legal Routes */}
+        <Route path="/legal" element={<DocumentationCentrePage />} />
+        <Route path="/documentation" element={<Navigate to="/legal" replace />} />
         <Route path="/privacy-policy" element={<PrivacyPage />} />
         <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/data-privacy" element={<DataPrivacyPage />} />
+        <Route path="/security-overview" element={<Navigate to="/data-privacy" replace />} />
+        <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+        <Route path="/ai-transparency" element={<AiTransparencyPage />} />
+        <Route path="/medical-disclaimer" element={<MedicalDisclaimerPage />} />
+        <Route path="/data-retention" element={<DataRetentionPolicyPage />} />
+        <Route path="/acceptable-use" element={<AcceptableUsePage />} />
+        <Route path="/accessibility" element={<AccessibilityPage />} />
+        <Route path="/privacy-requests" element={<PrivacyRequestsPage />} />
 
         {/* Authentication & Onboarding Routes */}
         <Route path="/login" element={<LoginPage />} />

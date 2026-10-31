@@ -19,6 +19,11 @@ const server = app.listen(config.port, HOST, () => {
     logger.info(`Firebase RTDB Status: ${rtdbStatus.status} [Target: ${rtdbStatus.databaseURL}]`);
   }
 
+  // Phase 6.3 AI Sandbox & Vendor Privacy Safeguards
+  logger.info(
+    `[AI SANDBOX] Mode: ${config.aiSandbox?.sandboxMode ? 'ENABLED (MOCK/SYNTHETIC ONLY)' : 'LIVE'} [Gemini Provider: ${config.aiSandbox?.geminiProvider}, Gemini Clinical Live: ${config.aiSandbox?.geminiClinicalLiveEnabled}, AssemblyAI Live: ${config.aiSandbox?.assemblyaiLiveEnabled}]`
+  );
+
   // Start background worker for asynchronous AI documentation jobs
   startWorker();
 });

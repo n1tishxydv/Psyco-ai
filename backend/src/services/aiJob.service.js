@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import config from '../config/index.js';
 import { firebaseRtdbAdapter } from '../integrations/firebase/firebaseRtdbAdapter.js';
 import { geminiAdapter } from '../integrations/gemini/geminiAdapter.js';
 import { clinicalService } from './clinical.service.js';
@@ -244,6 +245,9 @@ export const aiJobService = {
         format: jobRecord.format,
         sourceTranscriptId: context.transcript.id,
         transcriptVersion: context.transcriptVersion,
+        providerMode: config.aiSandbox?.geminiProvider || 'mock',
+        sandboxMode: Boolean(config.aiSandbox?.sandboxMode),
+        status: 'queued',
       },
     });
 
@@ -289,11 +293,16 @@ export const aiJobService = {
       // 1. Re-assert authorization & retrieve fresh source context
       const context = await aiJobService.prepareSourceContext(job.psychologistId, job.sessionId, job.jobType);
 
-      // 2. Invoke Gemini Provider Adapter
-      const { output, modelUsed, isSimulated } = await geminiAdapter.generateClinicalDocumentation(
+      // 2. Invoke Gemini Provider Adapter (routes to mock provider in sandbox)
+      const docResult = await geminiAdapter.generateClinicalDocumentation(
         job.jobType,
         context
       );
+      const { output, modelUsed, isSimulated } = docResult;
+      const isSandboxMode = Boolean(config.aiSandbox?.sandboxMode);
+      const isSyntheticRecord = Boolean(docResult.isSynthetic || isSimulated || isSandboxMode);
+      const isMockRecord = Boolean(docResult.isMock || isSimulated || config.aiSandbox?.geminiProvider === 'mock');
+      const providerMode = docResult.provider || (isSandboxMode ? 'mock' : 'gemini');
 
       // 3. Update status to validating
       job.status = 'validating';
@@ -322,8 +331,12 @@ export const aiJobService = {
         missingInformation: validatedOutput.missingInformation || [],
         modelUsed,
         isSimulated: Boolean(isSimulated),
+        isSynthetic: isSyntheticRecord,
+        isMock: isMockRecord,
+        provider: providerMode,
+        sandboxMode: isSandboxMode,
         isDraft: true,
-        approvalStatus: 'pending_approval', // 'pending_approval' | 'edited' | 'approved' | 'rejected'
+        approvalStatus: 'pending_approval', // Strictly pending human review and digital signature
         reviewedAt: null,
         approvedAt: null,
         approvedBy: null,
@@ -343,7 +356,7 @@ export const aiJobService = {
       job.updatedAt = completedTime;
       await firebaseRtdbAdapter.set(`aiJobs/${jobId}`, job);
 
-      // 7. Audit log
+      // 7. Audit log (sanitized: providerMode, sandboxMode, isSynthetic, status)
       await auditService.log({
         action: 'AI_JOB_COMPLETED',
         userId: job.psychologistId,
@@ -354,6 +367,10 @@ export const aiJobService = {
           jobType: job.jobType,
           modelUsed,
           attemptCount: currentAttempt,
+          providerMode,
+          sandboxMode: isSandboxMode,
+          isSynthetic: isSyntheticRecord,
+          status: 'success',
         },
       });
 
@@ -383,7 +400,9 @@ export const aiJobService = {
         details: {
           jobType: job.jobType,
           attemptCount: currentAttempt,
-          error: job.errorMessage,
+          providerMode: config.aiSandbox?.geminiProvider || 'mock',
+          sandboxMode: Boolean(config.aiSandbox?.sandboxMode),
+          status: isRetryable ? 'retrying' : 'failed',
           errorCode: job.errorCode,
         },
       });
@@ -818,6 +837,10 @@ export const aiJobService = {
         draftType: draft.draftType,
         recordType,
         committedRecordId: draft.committedRecordId,
+        providerMode: draft.provider || config.aiSandbox?.geminiProvider || 'mock',
+        sandboxMode: Boolean(draft.sandboxMode !== undefined ? draft.sandboxMode : config.aiSandbox?.sandboxMode),
+        isSynthetic: Boolean(draft.isSynthetic),
+        status: 'approved',
       },
     });
 

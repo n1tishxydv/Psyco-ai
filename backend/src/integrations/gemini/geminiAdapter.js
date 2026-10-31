@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import config from '../../config/index.js';
 import { logger } from '../../utils/logger.js';
+import { mockAiAdapter } from '../ai/mockAiAdapter.js';
 
 const SYSTEM_INSTRUCTION = `You are Psyco AI's Clinical Documentation Copilot, an AI assistant assisting licensed mental health professionals.
 
@@ -35,10 +36,33 @@ export class GeminiAdapter {
 
   getStatus() {
     const configured = this.isConfigured();
+    const isSandbox = Boolean(config.aiSandbox?.sandboxMode);
+    const isMock = config.aiSandbox?.geminiProvider === 'mock';
+    const liveEnabled = Boolean(config.aiSandbox?.geminiClinicalLiveEnabled);
+
+    if (isSandbox || isMock || !liveEnabled) {
+      return {
+        service: this.name,
+        configured,
+        status: 'SANDBOX_MOCK_ACTIVE',
+        providerMode: config.aiSandbox?.geminiProvider || 'mock',
+        sandboxMode: isSandbox,
+        clinicalLiveEnabled: liveEnabled,
+        externalCallsBlocked: true,
+        model: 'mock-deterministic-clinical-v1',
+        storagePolicy: 'ZERO_EXTERNAL_TRANSMISSION',
+        humanInTheLoopEnforced: true,
+        message: 'External Gemini calls disabled in clinical workflows. Deterministic mock provider active for pilot sandbox.',
+      };
+    }
+
     return {
       service: this.name,
       configured,
       status: configured ? 'ACTIVE' : 'STANDBY',
+      providerMode: 'live',
+      sandboxMode: false,
+      clinicalLiveEnabled: true,
       model: config.integrations.gemini.model || 'gemini-3.8-flash',
       storagePolicy: 'PROVIDER_STORAGE_OFF_INFERENCE_ONLY',
       humanInTheLoopEnforced: true,
@@ -52,7 +76,7 @@ export class GeminiAdapter {
    * Generates structured clinical documentation for a given job type and context
    * @param {string} jobType 
    * @param {object} context - Prepared source context { transcriptText, transcriptVersion, session, patient, intake, existingTreatmentPlan }
-   * @returns {Promise<{ output: object, modelUsed: string, isSimulated: boolean }>}
+   * @returns {Promise<{ output: object, modelUsed: string, isSimulated: boolean, isSynthetic?: boolean, isMock?: boolean, provider?: string, sandboxMode?: boolean }>}
    */
   async generateClinicalDocumentation(jobType, context) {
     const { transcriptText, transcriptVersion, session, patient, intake, existingTreatmentPlan } = context;
@@ -62,6 +86,18 @@ export class GeminiAdapter {
       err.status = 400;
       err.code = 'EMPTY_TRANSCRIPT';
       throw err;
+    }
+
+    const isSandbox = Boolean(config.aiSandbox?.sandboxMode);
+    const isMock = config.aiSandbox?.geminiProvider === 'mock';
+    const liveEnabled = Boolean(config.aiSandbox?.geminiClinicalLiveEnabled);
+
+    // AI Sandbox Guard: Completely block external Gemini calls in clinical workflows
+    if (isSandbox || isMock || !liveEnabled) {
+      logger.info(
+        `[AI SANDBOX GUARD] External Gemini call blocked for ${jobType}. Routing to deterministic mockAiAdapter. (sandboxMode=${isSandbox}, provider=${config.aiSandbox?.geminiProvider})`
+      );
+      return mockAiAdapter.generateClinicalDocumentation(jobType, context);
     }
 
     const candidateModels = Array.from(new Set([

@@ -7,7 +7,8 @@ import { Badge } from '../../../components/common/Badge';
 import { AlertBanner } from '../../../components/common/AlertBanner';
 import { publicService } from '../../../services/publicService';
 import { isBackendConfigured } from '../../../services/apiClient';
-import { Mail, Clock, Send, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { contactConfig } from '../../../config/contactConfig';
+import { Mail, Phone, Send, ShieldAlert, AlertTriangle } from 'lucide-react';
 
 export function ContactSection() {
   const [formData, setFormData] = useState({
@@ -96,15 +97,19 @@ export function ContactSection() {
               <div className="flex items-start gap-3">
                 <Mail className="w-4 h-4 text-softTeal mt-0.5 shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-primaryText">General Inquiries</h4>
-                  <p className="text-secondaryText">support@psyco-ai.internal</p>
+                  <h4 className="font-semibold text-primaryText">Email Inquiries</h4>
+                  <a href={contactConfig.emailHref} className="text-softTeal hover:underline font-mono text-[11px] break-all">
+                    {contactConfig.email}
+                  </a>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Clock className="w-4 h-4 text-calmGreen mt-0.5 shrink-0" />
+                <Phone className="w-4 h-4 text-calmGreen mt-0.5 shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-primaryText">Support Hours</h4>
-                  <p className="text-secondaryText">Monday – Friday: 9 AM – 6 PM (IST)</p>
+                  <h4 className="font-semibold text-primaryText">Telephone Inquiries</h4>
+                  <a href={contactConfig.phoneHref} className="text-calmGreen hover:underline font-mono text-[11px]">
+                    {contactConfig.phone}
+                  </a>
                 </div>
               </div>
             </CardContent>

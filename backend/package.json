@@ -11,6 +11,8 @@
     "dev:staging": "node --env-file=.env.staging --watch src/server.js",
     "seed:staging": "node --env-file=.env.staging scripts/seedStagingEnvironment.js",
     "seed:staging:dry-run": "node --env-file=.env.staging scripts/seedStagingEnvironment.js --dry-run",
+    "restore:staging:dry-run": "node --env-file=.env.staging scripts/restoreStagingBackup.js --staging-only --dry-run",
+    "restore:staging": "node --env-file=.env.staging scripts/restoreStagingBackup.js --staging-only --confirm-staging-restore",
     "test": "node --test src/tests/*.test.js"
   },
   "keywords": [

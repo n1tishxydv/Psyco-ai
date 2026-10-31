@@ -14,6 +14,8 @@
     "test": "npm --prefix backend run test",
     "seed:staging": "npm --prefix backend run seed:staging",
     "seed:staging:dry-run": "npm --prefix backend run seed:staging:dry-run",
+    "restore:staging:dry-run": "npm --prefix backend run restore:staging:dry-run",
+    "restore:staging": "npm --prefix backend run restore:staging",
     "install:all": "npm --prefix backend install && npm --prefix frontend install"
   },
   "keywords": [

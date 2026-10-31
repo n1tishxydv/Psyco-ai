@@ -57,6 +57,15 @@ export async function saveDraftIntake(req, res, next) {
     const patientId = req.user.uid;
     const existing = (await firebaseRtdbAdapter.get(`patientIntake/${patientId}`)) || {};
 
+    if (existing.status === 'submitted') {
+      return errorResponse(
+        res,
+        'Intake questionnaire has already been submitted and finalized.',
+        400,
+        'INTAKE_ALREADY_SUBMITTED'
+      );
+    }
+
     const draftData = {
       ...existing,
       ...req.body,

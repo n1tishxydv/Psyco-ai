@@ -12,11 +12,12 @@ coverage/
 *.lcov
 .nyc_output/
 
-# Production Builds
+# Production Builds & Hosting Deployment Caches
 dist/
 build/
 frontend/dist/
 *.tsbuildinfo
+.firebase/
 
 # Environment & Secrets (NEVER COMMIT SENSITIVE SECRETS)
 .env

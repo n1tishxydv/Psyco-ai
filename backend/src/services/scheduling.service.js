@@ -75,6 +75,25 @@ export const schedulingService = {
   addBlockedDate: async (psychologistId, block) => {
     const avail = await schedulingService.getAvailability(psychologistId);
     const blockedList = avail.blockedDates || [];
+
+    // Backend authoritative validation: check collision with existing leave
+    const inLeave = (avail.leavePeriods || []).some((l) => block.date >= l.startDate && block.date <= l.endDate);
+    if (inLeave) {
+      const err = new Error('The selected date falls within an existing approved clinical leave period.');
+      err.code = 'DATE_IN_LEAVE_PERIOD';
+      err.status = 409;
+      throw err;
+    }
+
+    // Backend authoritative validation: check existing full-day block
+    const alreadyBlocked = blockedList.some((b) => b.date === block.date && b.isFullDay);
+    if (alreadyBlocked && block.isFullDay !== false) {
+      const err = new Error('This date is already blocked as a full day.');
+      err.code = 'DATE_ALREADY_BLOCKED';
+      err.status = 409;
+      throw err;
+    }
+
     const newBlock = {
       id: `blk_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       date: block.date,
@@ -106,6 +125,16 @@ export const schedulingService = {
   addLeavePeriod: async (psychologistId, leave) => {
     const avail = await schedulingService.getAvailability(psychologistId);
     const leaveList = avail.leavePeriods || [];
+
+    // Backend authoritative validation: ensure new leave interval does not overlap with existing leave
+    const hasOverlap = leaveList.some((l) => leave.startDate <= l.endDate && leave.endDate >= l.startDate);
+    if (hasOverlap) {
+      const err = new Error('Requested leave period overlaps with an existing scheduled leave period.');
+      err.code = 'LEAVE_INTERVAL_OVERLAP';
+      err.status = 409;
+      throw err;
+    }
+
     const newLeave = {
       id: `leave_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       startDate: leave.startDate,

@@ -21,6 +21,7 @@ import assessmentRoutes from './v1/assessment.routes.js';
 import analyticsRoutes from './v1/analytics.routes.js';
 import riskReviewRoutes from './v1/riskReview.routes.js';
 import documentationQualityRoutes from './v1/documentationQuality.routes.js';
+import practiceRoutes from './v1/practice.routes.js';
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.use('/health', healthRoutes);
 router.use('/public', publicRoutes);
 router.use('/auth', authRoutes);
 router.use('/profile', profileRoutes);
+router.use('/practice', practiceRoutes);
 router.use('/intake', intakeRoutes);
 router.use('/appointments', appointmentRoutes);
 router.use('/availability', availabilityRoutes);

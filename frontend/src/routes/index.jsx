@@ -35,6 +35,7 @@ import { BookingPage } from '../features/appointments/BookingPage';
 import { PatientAppointmentsPage } from '../features/appointments/PatientAppointmentsPage';
 import { PsychologistCalendarPage } from '../features/appointments/PsychologistCalendarPage';
 import { AvailabilitySettingsPage } from '../features/psychologists/AvailabilitySettingsPage';
+import { PracticeSetupPage } from '../features/psychologists/PracticeSetupPage';
 
 // Phase 4 Clinical Workspace, Patient Management, Documentation, Treatment Plans & Reports
 import { PatientDirectoryPage } from '../features/clinical/PatientDirectoryPage';
@@ -206,6 +207,16 @@ export function AppRoutes() {
             <ProtectedRoute>
               <RoleRoute allowedRoles={['psychologist']}>
                 <PsychologistDashboard />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/psychologist/practice-setup"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRoles={['psychologist']}>
+                <PracticeSetupPage />
               </RoleRoute>
             </ProtectedRoute>
           }

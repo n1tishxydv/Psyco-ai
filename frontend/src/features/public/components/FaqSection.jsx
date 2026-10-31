@@ -8,7 +8,10 @@ import { AlertBanner } from '../../../components/common/AlertBanner';
 import { LoadingSpinner } from '../../../components/common/LoadingSpinner';
 import { publicService } from '../../../services/publicService';
 import { isBackendConfigured } from '../../../services/apiClient';
-import { ChevronDown, ChevronUp, HelpCircle, Send, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, HelpCircle, Send, CheckCircle2, Search, X, RotateCcw } from 'lucide-react';
+import { filterFaqs } from './faqUtils.js';
+
+export { filterFaqs };
 
 const FALLBACK_FAQS = [
   {
@@ -54,6 +57,7 @@ export function FaqSection({ defaultExpandedId = 'faq_01' }) {
   const [loading, setLoading] = useState(!isBackendConfigured() ? false : true);
   const [expandedId, setExpandedId] = useState(defaultExpandedId);
   const [activeCategory, setActiveCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Question Submission State
   const [question, setQuestion] = useState('');
@@ -99,9 +103,15 @@ export function FaqSection({ defaultExpandedId = 'faq_01' }) {
 
   const categories = ['All', ...new Set(faqs.map((f) => f.category || 'General'))];
 
-  const filteredFaqs = activeCategory === 'All'
-    ? faqs
-    : faqs.filter((f) => (f.category || 'General') === activeCategory);
+  const filteredFaqs = filterFaqs(faqs, {
+    category: activeCategory,
+    query: searchQuery,
+  });
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setActiveCategory('All');
+  };
 
   const handleSubmitQuestion = async (e) => {
     e.preventDefault();
@@ -152,13 +162,69 @@ export function FaqSection({ defaultExpandedId = 'faq_01' }) {
         </p>
       </div>
 
+      {/* Accessible Keyword Search Input */}
+      <div className="max-w-xl mx-auto w-full px-4 space-y-2">
+        <div className="relative flex items-center">
+          <div className="absolute left-3.5 pointer-events-none text-slate-400">
+            <Search className="w-4 h-4 text-softTeal" aria-hidden="true" />
+          </div>
+          <input
+            id="faq-search-input"
+            type="search"
+            role="searchbox"
+            aria-label="Search FAQ questions and answers"
+            placeholder="Search questions or keywords (e.g. audio, privacy, ReBAC)..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setSearchQuery('');
+            }}
+            className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm bg-deepBlueGray/90 border border-slate-700/80 rounded-xl text-primaryText placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-softTeal/60 focus:border-softTeal transition-all shadow-inner"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear FAQ search"
+              className="absolute right-3 p-1 rounded-full text-slate-400 hover:text-primaryText hover:bg-slate-700/60 focus:outline-none focus:ring-2 focus:ring-softTeal"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {(searchQuery || activeCategory !== 'All') && (
+          <div className="flex items-center justify-between text-[11px] text-secondaryText px-1 pt-1">
+            <span>
+              Showing {filteredFaqs.length} of {faqs.length} question{faqs.length !== 1 ? 's' : ''}
+              {searchQuery && (
+                <span> matching &ldquo;<span className="text-softTeal font-medium">{searchQuery}</span>&rdquo;</span>
+              )}
+              {activeCategory !== 'All' && (
+                <span> in <span className="text-primaryText font-medium">{activeCategory}</span></span>
+              )}
+            </span>
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="text-softTeal hover:underline text-[11px] font-medium flex items-center gap-1"
+            >
+              <RotateCcw className="w-3 h-3" />
+              Reset filters
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Category Filter Chips */}
       {categories.length > 2 && (
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2" role="tablist" aria-label="FAQ categories">
           {categories.map((cat) => (
             <button
               key={cat}
               type="button"
+              role="tab"
+              aria-selected={activeCategory === cat}
               onClick={() => setActiveCategory(cat)}
               className={`px-3 py-1 text-xs rounded-full border transition-all ${
                 activeCategory === cat
@@ -180,7 +246,27 @@ export function FaqSection({ defaultExpandedId = 'faq_01' }) {
             <p className="text-xs text-secondaryText">Loading published FAQs...</p>
           </div>
         ) : filteredFaqs.length === 0 ? (
-          <p className="text-center text-xs text-secondaryText py-6">No FAQs available in this category.</p>
+          <div className="text-center py-12 px-4 space-y-3 bg-deepBlueGray/40 border border-slate-800 rounded-2xl">
+            <div className="inline-flex p-3 rounded-full bg-slate-800/80 text-secondaryText">
+              <HelpCircle className="w-6 h-6 text-slate-400" />
+            </div>
+            <h3 className="text-sm font-semibold text-primaryText">No matching questions found</h3>
+            <p className="text-xs text-secondaryText max-w-md mx-auto">
+              {searchQuery
+                ? `We couldn't find any FAQs matching "${searchQuery}"${activeCategory !== 'All' ? ` in category "${activeCategory}"` : ''}. Try adjusting your keywords or clearing the filter.`
+                : `No FAQs available in the "${activeCategory}" category.`}
+            </p>
+            <div className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleResetFilters}
+              >
+                Clear search & reset filters
+              </Button>
+            </div>
+          </div>
         ) : (
           filteredFaqs.map((faq) => {
             const isOpen = expandedId === faq.id;

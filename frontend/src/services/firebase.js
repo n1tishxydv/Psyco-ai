@@ -14,13 +14,17 @@ import {
 } from 'firebase/auth';
 import { getDatabase, ref, get, set, update } from 'firebase/database';
 
+const env = (typeof import.meta !== 'undefined' && import.meta.env)
+  ? import.meta.env
+  : (typeof process !== 'undefined' && process.env ? process.env : {});
+
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  apiKey: env.VITE_FIREBASE_API_KEY,
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: env.VITE_FIREBASE_PROJECT_ID,
+  databaseURL: env.VITE_FIREBASE_DATABASE_URL,
+  appId: env.VITE_FIREBASE_APP_ID,
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
 };
 
 export const isFirebaseConfigured = Boolean(

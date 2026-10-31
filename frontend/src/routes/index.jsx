@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from '../components/layout/AppShell';
 import { ProtectedRoute } from './ProtectedRoute';
 import { RoleRoute } from './RoleRoute';
+import { LoadingSpinner } from '../components/common/LoadingSpinner';
 
-// Public Feature Pages
+// Public Feature Pages (Static direct imports for immediate first paint)
 import { HomePage } from '../features/public/HomePage';
 import { AboutPage } from '../features/public/AboutPage';
 import { ServicesPage } from '../features/public/ServicesPage';
@@ -17,46 +18,84 @@ import { GetStartedPage } from '../features/public/GetStartedPage';
 import { PatientPortalInfoPage } from '../features/public/PatientPortalInfoPage';
 import { PsychologistPortalInfoPage } from '../features/public/PsychologistPortalInfoPage';
 
-// Auth & Onboarding Feature Pages
+// Auth & Onboarding Feature Pages (Static direct imports for instant auth flow)
 import { LoginPage } from '../features/auth/LoginPage';
 import { RegisterPage } from '../features/auth/RegisterPage';
 import { OnboardingPage } from '../features/auth/OnboardingPage';
 
-// Phase 2 Intake & Profile Pages
-import { PatientIntakePage } from '../features/intake/PatientIntakePage';
-import { PatientProfilePage } from '../features/profiles/PatientProfilePage';
-import { PsychologistProfilePage } from '../features/profiles/PsychologistProfilePage';
-import { IntakeTemplateSettingsPage } from '../features/psychologists/IntakeTemplateSettingsPage';
-import { SettingsPage } from '../features/settings/SettingsPage';
-
-// Phase 3 Scheduling & Directory Pages
+// Directory & Public Booking
 import { PsychologistDirectoryPage } from '../features/directory/PsychologistDirectoryPage';
 import { BookingPage } from '../features/appointments/BookingPage';
-import { PatientAppointmentsPage } from '../features/appointments/PatientAppointmentsPage';
-import { PsychologistCalendarPage } from '../features/appointments/PsychologistCalendarPage';
-import { AvailabilitySettingsPage } from '../features/psychologists/AvailabilitySettingsPage';
-import { PracticeSetupPage } from '../features/psychologists/PracticeSetupPage';
 
-// Phase 4 Clinical Workspace, Patient Management, Documentation, Treatment Plans & Reports
-import { PatientDirectoryPage } from '../features/clinical/PatientDirectoryPage';
-import { PatientChartPage } from '../features/clinical/PatientChartPage';
-import { SessionWorkspacePage } from '../features/clinical/SessionWorkspacePage';
-import { TreatmentPlansPage } from '../features/clinical/TreatmentPlansPage';
-import { ReportsPage } from '../features/clinical/ReportsPage';
-import { PatientCarePlanPage } from '../features/patients/PatientCarePlanPage';
+// Prioritized Lazy-Loaded Route Components (Admin & Clinical Workspaces)
+const AdminDashboard = lazy(() =>
+  import('../features/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
+);
+const SessionWorkspacePage = lazy(() =>
+  import('../features/clinical/SessionWorkspacePage').then((m) => ({ default: m.SessionWorkspacePage }))
+);
+const PatientChartPage = lazy(() =>
+  import('../features/clinical/PatientChartPage').then((m) => ({ default: m.PatientChartPage }))
+);
+const PatientDirectoryPage = lazy(() =>
+  import('../features/clinical/PatientDirectoryPage').then((m) => ({ default: m.PatientDirectoryPage }))
+);
+const TreatmentPlansPage = lazy(() =>
+  import('../features/clinical/TreatmentPlansPage').then((m) => ({ default: m.TreatmentPlansPage }))
+);
+const ReportsPage = lazy(() =>
+  import('../features/clinical/ReportsPage').then((m) => ({ default: m.ReportsPage }))
+);
+const PatientCarePlanPage = lazy(() =>
+  import('../features/patients/PatientCarePlanPage').then((m) => ({ default: m.PatientCarePlanPage }))
+);
+const TranscriptStudioPage = lazy(() =>
+  import('../features/transcription/TranscriptStudioPage').then((m) => ({ default: m.TranscriptStudioPage }))
+);
+const PatientAssessmentRunnerPage = lazy(() =>
+  import('../features/assessments/PatientAssessmentRunnerPage').then((m) => ({ default: m.PatientAssessmentRunnerPage }))
+);
 
-// Phase 5 Transcription & Review Studio
-import { TranscriptStudioPage } from '../features/transcription/TranscriptStudioPage';
-
-// Phase 7 Standardized Assessments
-import { PatientAssessmentRunnerPage } from '../features/assessments/PatientAssessmentRunnerPage';
-
-// Portal Dashboards (Phase 2 - 4)
-import { PatientDashboard } from '../features/patients/PatientDashboard';
-import { PsychologistDashboard } from '../features/psychologists/PsychologistDashboard';
-import { AdminDashboard } from '../features/admin/AdminDashboard';
-import { AppointmentsPage } from '../features/appointments/AppointmentsPage';
-import { ClinicalNotesPage } from '../features/clinicalNotes/ClinicalNotesPage';
+// Lazy-Loaded Portals & Dashboards
+const PatientDashboard = lazy(() =>
+  import('../features/patients/PatientDashboard').then((m) => ({ default: m.PatientDashboard }))
+);
+const PsychologistDashboard = lazy(() =>
+  import('../features/psychologists/PsychologistDashboard').then((m) => ({ default: m.PsychologistDashboard }))
+);
+const AppointmentsPage = lazy(() =>
+  import('../features/appointments/AppointmentsPage').then((m) => ({ default: m.AppointmentsPage }))
+);
+const ClinicalNotesPage = lazy(() =>
+  import('../features/clinicalNotes/ClinicalNotesPage').then((m) => ({ default: m.ClinicalNotesPage }))
+);
+const PatientAppointmentsPage = lazy(() =>
+  import('../features/appointments/PatientAppointmentsPage').then((m) => ({ default: m.PatientAppointmentsPage }))
+);
+const PsychologistCalendarPage = lazy(() =>
+  import('../features/appointments/PsychologistCalendarPage').then((m) => ({ default: m.PsychologistCalendarPage }))
+);
+const AvailabilitySettingsPage = lazy(() =>
+  import('../features/psychologists/AvailabilitySettingsPage').then((m) => ({ default: m.AvailabilitySettingsPage }))
+);
+const PracticeSetupPage = lazy(() =>
+  import('../features/psychologists/PracticeSetupPage').then((m) => ({ default: m.PracticeSetupPage }))
+);
+const PatientIntakePage = lazy(() =>
+  import('../features/intake/PatientIntakePage').then((m) => ({ default: m.PatientIntakePage }))
+);
+const PatientProfilePage = lazy(() =>
+  import('../features/profiles/PatientProfilePage').then((m) => ({ default: m.PatientProfilePage }))
+);
+const PsychologistProfilePage = lazy(() =>
+  import('../features/profiles/PsychologistProfilePage').then((m) => ({ default: m.PsychologistProfilePage }))
+);
+const IntakeTemplateSettingsPage = lazy(() =>
+  import('../features/psychologists/IntakeTemplateSettingsPage').then((m) => ({ default: m.IntakeTemplateSettingsPage }))
+);
+const SettingsPage = lazy(() =>
+  import('../features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage }))
+);
 
 // 404 Not Found Page
 import { EmptyState } from '../components/common/EmptyState';
@@ -78,10 +117,20 @@ function NotFoundPage() {
   );
 }
 
+function RouteLoadingFallback() {
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center p-12 min-h-[50vh] space-y-3" role="status">
+      <LoadingSpinner size="lg" />
+      <p className="text-xs text-secondaryText animate-pulse">Loading workspace...</p>
+    </div>
+  );
+}
+
 export function AppRoutes() {
   return (
     <AppShell>
-      <Routes>
+      <Suspense fallback={<RouteLoadingFallback />}>
+        <Routes>
         {/* Core Public Website Routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
@@ -379,6 +428,7 @@ export function AppRoutes() {
         {/* Catch-all 404 */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </AppShell>
+    </Suspense>
+  </AppShell>
   );
 }

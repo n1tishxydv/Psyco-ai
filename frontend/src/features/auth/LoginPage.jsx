@@ -13,6 +13,9 @@ export function LoginPage() {
   const { loginWithEmail, loginWithGoogle, requestPasswordReset, isFirebaseConfigured } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const isSessionExpired = location.state?.sessionExpired || queryParams.get('sessionExpired') === 'true';
+  const returnUrlParam = queryParams.get('returnUrl');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,9 +31,10 @@ export function LoginPage() {
   const [resetError, setResetError] = useState(null);
 
   const handlePostLoginRedirect = (profile) => {
-    const from = location.state?.from?.pathname;
-    if (from && from !== '/login' && from !== '/register') {
-      navigate(from, { replace: true });
+    // If a returnUrl was preserved during session expiration or protected route bounce
+    const targetUrl = returnUrlParam ? decodeURIComponent(returnUrlParam) : location.state?.from?.pathname;
+    if (targetUrl && targetUrl !== '/login' && targetUrl !== '/register') {
+      navigate(targetUrl, { replace: true });
       return;
     }
 
@@ -120,6 +124,14 @@ export function LoginPage() {
             Sign in to access your clinical practice or patient care portal.
           </p>
         </div>
+
+        {isSessionExpired && (
+          <AlertBanner
+            type="warning"
+            title="Session Expired"
+            message="Your session has expired due to inactivity. Please sign in again to continue."
+          />
+        )}
 
         {errorMsg && (
           <AlertBanner type="error" title="Authentication Error" message={errorMsg} />

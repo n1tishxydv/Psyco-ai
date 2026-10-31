@@ -3,20 +3,37 @@ import { z } from 'zod';
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/; // HH:MM format
 
 const timeSlotSchema = z.object({
-  startTime: z.string().regex(timeRegex, 'Start time must be in HH:MM format (e.g. 09:00)'),
-  endTime: z.string().regex(timeRegex, 'End time must be in HH:MM format (e.g. 17:00)'),
+  startTime: z.string().regex(timeRegex, 'Start time must be in HH:MM format (e.g. 09:00)').optional(),
+  endTime: z.string().regex(timeRegex, 'End time must be in HH:MM format (e.g. 17:00)').optional(),
+  start: z.string().regex(timeRegex, 'Start time must be in HH:MM format (e.g. 09:00)').optional(),
+  end: z.string().regex(timeRegex, 'End time must be in HH:MM format (e.g. 17:00)').optional(),
   mode: z.enum(['in_person', 'online', 'both']).default('both'),
 }).refine(
-  (data) => data.startTime < data.endTime,
-  { message: 'Start time must precede end time' }
+  (data) => {
+    const s = data.startTime || data.start;
+    const e = data.endTime || data.end;
+    return Boolean(s && e && s < e);
+  },
+  { message: 'Valid start and end times in HH:MM format are required and start time must precede end time' }
 );
 
 const singleDayObjectSchema = z.object({
   enabled: z.boolean().default(true),
-  startTime: z.string().regex(timeRegex).optional().default('09:00'),
-  endTime: z.string().regex(timeRegex).optional().default('17:00'),
+  startTime: z.string().regex(timeRegex).optional(),
+  endTime: z.string().regex(timeRegex).optional(),
+  start: z.string().regex(timeRegex).optional(),
+  end: z.string().regex(timeRegex).optional(),
   mode: z.enum(['in_person', 'online', 'both']).default('both'),
-});
+}).refine(
+  (data) => {
+    if (data.enabled === false) return true;
+    const s = data.startTime || data.start;
+    const e = data.endTime || data.end;
+    if (!s && !e) return true;
+    return Boolean(s && e && s < e);
+  },
+  { message: 'Valid start and end times in HH:MM format are required and start time must precede end time' }
+);
 
 const dayScheduleUnion = z.union([
   z.array(timeSlotSchema),

@@ -1,6 +1,17 @@
 import { firebaseRtdbAdapter } from '../integrations/firebase/firebaseRtdbAdapter.js';
 import { logger } from '../utils/logger.js';
 import crypto from 'crypto';
+import {
+  normalizeSchedulePeriod,
+  normalizeWeeklySchedule,
+  normalizeAvailability,
+} from '../utils/availabilityNormalizer.js';
+
+export {
+  normalizeSchedulePeriod,
+  normalizeWeeklySchedule,
+  normalizeAvailability,
+};
 
 export const DEFAULT_AVAILABILITY = {
   weeklySchedule: {
@@ -33,9 +44,24 @@ export const DEFAULT_AVAILABILITY = {
 
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
+/**
+ * Generates a deterministic, path-safe UTC slot key for atomic reservations
+ */
+export function getCanonicalSlotKey(startTime) {
+  const d = new Date(startTime);
+  if (isNaN(d.getTime())) {
+    const err = new Error('Invalid appointment time boundaries.');
+    err.code = 'INVALID_TIME_INTERVAL';
+    err.status = 400;
+    throw err;
+  }
+  return d.toISOString().replace(/[:.]/g, '_');
+}
+
 export const schedulingService = {
   /**
-   * Retrieves psychologist's availability configuration or initial default
+   * Retrieves psychologist's availability configuration or initial default,
+   * fully normalized into the canonical schema.
    */
   getAvailability: async (psychologistId) => {
     const custom = await firebaseRtdbAdapter.get(`availability/${psychologistId}`);
@@ -46,22 +72,24 @@ export const schedulingService = {
         isDefault: true,
       };
     }
+    const normalized = normalizeAvailability(custom);
     return {
       psychologistId,
       ...DEFAULT_AVAILABILITY,
-      ...custom,
+      ...normalized,
       isDefault: false,
     };
   },
 
   /**
-   * Saves or updates psychologist's availability settings
+   * Saves or updates psychologist's availability settings in canonical format.
    */
   updateAvailability: async (psychologistId, updates) => {
     const current = await schedulingService.getAvailability(psychologistId);
+    const normalizedUpdates = normalizeAvailability(updates);
     const merged = {
       ...current,
-      ...updates,
+      ...normalizedUpdates,
       psychologistId,
       updatedAt: new Date().toISOString(),
     };
@@ -159,7 +187,8 @@ export const schedulingService = {
   },
 
   /**
-   * Calculates available appointment slots for a psychologist on a given date (YYYY-MM-DD)
+   * Calculates available appointment slots for a psychologist on a given date (YYYY-MM-DD).
+   * Checks weekly schedule, leave periods, blocked dates, existing appointments, and active reservations.
    */
   getAvailableSlots: async (psychologistId, dateString, requestedMode = null) => {
     const avail = await schedulingService.getAvailability(psychologistId);
@@ -170,10 +199,10 @@ export const schedulingService = {
     }
 
     const dayName = DAY_NAMES[targetDate.getUTCDay()];
-    const workingSlots = avail.weeklySchedule?.[dayName] || [];
+    const rawWorkingSlots = avail.weeklySchedule?.[dayName] || [];
 
     // If day is not a working day
-    if (!workingSlots || workingSlots.length === 0) {
+    if (!rawWorkingSlots || rawWorkingSlots.length === 0) {
       return [];
     }
 
@@ -196,7 +225,14 @@ export const schedulingService = {
     const existingApts = Object.values(allAppointments).filter((apt) => {
       if (apt.psychologistId !== psychologistId) return false;
       if (apt.status === 'cancelled' || apt.status === 'rejected') return false;
-      return apt.startTime.startsWith(dateString);
+      return apt.startTime && apt.startTime.startsWith(dateString);
+    });
+
+    // Fetch active slot reservations for psychologist
+    const allReservations = await firebaseRtdbAdapter.get(`slotReservations/${psychologistId}`) || {};
+    const activeReservations = Object.values(allReservations).filter((resv) => {
+      if (resv.status !== 'reserved' && resv.status !== 'confirmed') return false;
+      return resv.startTime && resv.startTime.startsWith(dateString);
     });
 
     const durationMs = (avail.sessionDurationMinutes || 50) * 60 * 1000;
@@ -207,7 +243,15 @@ export const schedulingService = {
 
     const candidateSlots = [];
 
-    for (const period of workingSlots) {
+    for (const rawPeriod of rawWorkingSlots) {
+      let period;
+      try {
+        period = normalizeSchedulePeriod(rawPeriod);
+      } catch (normErr) {
+        logger.warn(`Skipping invalid schedule period on ${dayName} for psychologist ${psychologistId}: ${normErr.message}`);
+        continue;
+      }
+
       // Check mode compatibility
       if (requestedMode && period.mode !== 'both' && period.mode !== requestedMode) {
         continue;
@@ -249,11 +293,19 @@ export const schedulingService = {
         const overlapsApt = existingApts.some((apt) => {
           const aptStart = new Date(apt.startTime).getTime();
           const aptEnd = new Date(apt.endTime).getTime();
-          // Interval overlap test including buffer
           return slotStart < aptEnd + bufferMs && slotEnd + bufferMs > aptStart;
         });
 
         if (overlapsApt) continue;
+
+        // 4. Check overlap with active slot reservations + buffer
+        const overlapsResv = activeReservations.some((resv) => {
+          const resvStart = new Date(resv.startTime).getTime();
+          const resvEnd = new Date(resv.endTime).getTime();
+          return slotStart < resvEnd + bufferMs && slotEnd + bufferMs > resvStart;
+        });
+
+        if (overlapsResv) continue;
 
         candidateSlots.push({
           startTime: new Date(slotStart).toISOString(),
@@ -270,7 +322,7 @@ export const schedulingService = {
 
   /**
    * Concurrency-safe conflict check. Ensures an appointment interval does not overlap
-   * any active appointments or buffer periods.
+   * any active appointments, buffer periods, or active slot reservations.
    */
   assertNoConflicts: async (psychologistId, startTime, endTime, excludeAppointmentId = null) => {
     const startMs = new Date(startTime).getTime();
@@ -279,6 +331,7 @@ export const schedulingService = {
     if (isNaN(startMs) || isNaN(endMs) || startMs >= endMs) {
       const err = new Error('Invalid appointment time boundaries.');
       err.code = 'INVALID_TIME_INTERVAL';
+      err.status = 400;
       throw err;
     }
 
@@ -304,7 +357,205 @@ export const schedulingService = {
       }
     }
 
+    // Check all active reservations for psychologist
+    const allReservations = await firebaseRtdbAdapter.get(`slotReservations/${psychologistId}`) || {};
+    const nowMs = Date.now();
+    for (const resv of Object.values(allReservations)) {
+      if (resv.status !== 'reserved' && resv.status !== 'confirmed') continue;
+      if (excludeAppointmentId && resv.appointmentId === excludeAppointmentId) continue;
+
+      // Crash recovery: unconfirmed reservation lease expired without appointment record
+      const isExpired = resv.status === 'reserved' && resv.expiresAt && new Date(resv.expiresAt).getTime() < nowMs;
+      if (isExpired) {
+        const apt = resv.appointmentId ? await firebaseRtdbAdapter.get(`appointments/${resv.appointmentId}`) : null;
+        if (!apt) {
+          continue; // Expired reservation from crashed process is ignored and reclaimable
+        }
+      }
+
+      const resvStart = new Date(resv.startTime).getTime();
+      const resvEnd = new Date(resv.endTime).getTime();
+
+      if (startMs < resvEnd + bufferMs && endMs + bufferMs > resvStart) {
+        const err = new Error('The requested appointment slot conflicts with an existing booking or buffer window.');
+        err.code = 'SLOT_ALREADY_RESERVED';
+        err.status = 409;
+        throw err;
+      }
+    }
+
     return true;
+  },
+
+  /**
+   * Atomically claims a slot reservation in RTDB under slotReservations/${psychologistId}/${slotKey}.
+   * Scoped to the psychologist to protect against both exact-slot and overlapping interval races.
+   * Includes crash recovery leasing via expiresAt.
+   */
+  reserveSlotAtomically: async (psychologistId, startTime, endTime, bookingContext = {}) => {
+    const startMs = new Date(startTime).getTime();
+    const endMs = new Date(endTime).getTime();
+
+    if (isNaN(startMs) || isNaN(endMs) || startMs >= endMs) {
+      const err = new Error('Invalid appointment time boundaries.');
+      err.code = 'INVALID_TIME_INTERVAL';
+      err.status = 400;
+      throw err;
+    }
+
+    const slotKey = getCanonicalSlotKey(startTime);
+    const psychReservationsPath = `slotReservations/${psychologistId}`;
+
+    // Transaction scoped to psychologist reservations: serializes all reservations for this clinician
+    const result = await firebaseRtdbAdapter.runTransaction(psychReservationsPath, async (currentMap) => {
+      const reservations = currentMap || {};
+      const nowMs = Date.now();
+
+      // Check conflict with existing active appointments in database
+      await schedulingService.assertNoConflicts(
+        psychologistId,
+        startTime,
+        endTime,
+        bookingContext.excludeAppointmentId || null
+      );
+
+      const avail = await schedulingService.getAvailability(psychologistId);
+      const bufferMs = (avail.bufferTimeMinutes || 10) * 60 * 1000;
+
+      // Check conflict with any active reservation in the map across the entire interval
+      for (const [key, resv] of Object.entries(reservations)) {
+        if (!resv || typeof resv !== 'object') continue;
+        if (bookingContext.excludeAppointmentId && resv.appointmentId === bookingContext.excludeAppointmentId) continue;
+
+        // Check if reservation is active
+        const isActive = resv.status === 'reserved' || resv.status === 'confirmed';
+        if (!isActive) continue;
+
+        // Crash recovery: check expiration of unconfirmed reservation (lease expired)
+        const isExpired = resv.status === 'reserved' && resv.expiresAt && new Date(resv.expiresAt).getTime() < nowMs;
+        if (isExpired) {
+          const apt = resv.appointmentId ? await firebaseRtdbAdapter.get(`appointments/${resv.appointmentId}`) : null;
+          if (!apt) {
+            // Unpersisted expired reservation from crashed process: mark expired and allow reclaiming
+            resv.status = 'expired';
+            continue;
+          }
+        }
+
+        const resvStart = new Date(resv.startTime).getTime();
+        const resvEnd = new Date(resv.endTime).getTime();
+
+        // Check interval overlap including buffer
+        if (startMs < resvEnd + bufferMs && endMs + bufferMs > resvStart) {
+          // Idempotency check: same patient with same idempotency key or same appointmentId
+          const isSamePatient = resv.patientId === bookingContext.patientId;
+          const isSameIdempotency = Boolean(
+            bookingContext.idempotencyKey &&
+            resv.idempotencyKey &&
+            resv.idempotencyKey === bookingContext.idempotencyKey
+          );
+          const isSameAppointment = Boolean(
+            bookingContext.appointmentId &&
+            resv.appointmentId &&
+            resv.appointmentId === bookingContext.appointmentId
+          );
+
+          if (isSamePatient && (isSameIdempotency || isSameAppointment)) {
+            return reservations;
+          }
+
+          const err = new Error('The requested appointment slot conflicts with an existing booking or buffer window.');
+          err.code = 'SLOT_ALREADY_RESERVED';
+          err.status = 409;
+          throw err;
+        }
+      }
+
+      // Add the new reservation with a 10-minute crash recovery lease
+      const createdAt = new Date().toISOString();
+      const expiresAt = new Date(nowMs + 10 * 60 * 1000).toISOString();
+
+      reservations[slotKey] = {
+        slotKey,
+        psychologistId,
+        startTime: new Date(startTime).toISOString(),
+        endTime: new Date(endTime).toISOString(),
+        patientId: bookingContext.patientId || null,
+        appointmentId: bookingContext.appointmentId || null,
+        idempotencyKey: bookingContext.idempotencyKey || null,
+        status: 'reserved',
+        createdAt,
+        expiresAt,
+      };
+
+      return reservations;
+    });
+
+    return result.snapshot?.[slotKey];
+  },
+
+  /**
+   * Releases an active slot reservation safely, guarding against releasing unrelated appointments.
+   */
+  releaseSlotReservation: async (psychologistId, startTime, appointmentId = null) => {
+    if (!startTime) return false;
+    let slotKey;
+    try {
+      slotKey = getCanonicalSlotKey(startTime);
+    } catch {
+      return false;
+    }
+
+    const psychReservationsPath = `slotReservations/${psychologistId}`;
+
+    await firebaseRtdbAdapter.runTransaction(psychReservationsPath, async (currentMap) => {
+      const reservations = currentMap || {};
+      const current = reservations[slotKey];
+      if (!current) {
+        return reservations;
+      }
+
+      // Guard: do not release if reservation belongs to a different appointment
+      if (appointmentId && current.appointmentId && current.appointmentId !== appointmentId) {
+        logger.warn(`Slot reservation release mismatch: requested apt ${appointmentId} does not match reservation apt ${current.appointmentId}`);
+        return reservations;
+      }
+
+      reservations[slotKey] = {
+        ...current,
+        status: 'released',
+        releasedAt: new Date().toISOString(),
+      };
+      return reservations;
+    });
+
+    return true;
+  },
+
+  /**
+   * Atomically acquires a new slot reservation and releases the old slot reservation.
+   * If acquiring the new slot fails, the old reservation is untouched.
+   */
+  rescheduleSlotAtomically: async (psychologistId, oldStartTime, newStartTime, newEndTime, bookingContext = {}) => {
+    // 1. Atomically claim new slot first
+    const newReservation = await schedulingService.reserveSlotAtomically(
+      psychologistId,
+      newStartTime,
+      newEndTime,
+      {
+        ...bookingContext,
+        excludeAppointmentId: bookingContext.appointmentId,
+      }
+    );
+
+    // 2. Safely release old slot reservation
+    try {
+      await schedulingService.releaseSlotReservation(psychologistId, oldStartTime, bookingContext.appointmentId);
+    } catch (releaseErr) {
+      logger.warn(`Could not release old slot reservation for appointment ${bookingContext.appointmentId}: ${releaseErr.message}`);
+    }
+
+    return newReservation;
   },
 
   /**

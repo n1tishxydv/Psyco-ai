@@ -372,6 +372,14 @@ class FirebaseRtdbAdapter {
     // Clone and save to local memory store
     this.memoryStore.set(cleanPath, JSON.parse(JSON.stringify(data)));
 
+    // Purge any stale child subpaths so they do not shadow parent updates
+    const childPrefix = `${cleanPath}/`;
+    for (const key of this.memoryStore.keys()) {
+      if (key.startsWith(childPrefix)) {
+        this.memoryStore.delete(key);
+      }
+    }
+
     // Update ancestor subtree if present
     const segments = cleanPath.split('/');
     for (let i = 1; i < segments.length; i++) {
@@ -568,6 +576,61 @@ class FirebaseRtdbAdapter {
       }
     }
     return true;
+  }
+
+  /**
+   * Executes an atomic transaction on a specific database path.
+   * Serializes concurrent updates to the same path via an asynchronous mutex lock.
+   * Prevents race conditions during check-then-write operations.
+   */
+  async runTransaction(path, transactionFn, options = {}) {
+    const cleanPath = path.replace(/^\/|\/$/g, '');
+    const maxRetries = options.maxRetries || 5;
+
+    if (!this._transactionLocks) {
+      this._transactionLocks = new Map();
+    }
+
+    const acquireLock = async (lockKey) => {
+      while (this._transactionLocks.has(lockKey)) {
+        await this._transactionLocks.get(lockKey);
+      }
+      let release;
+      const promise = new Promise((resolve) => {
+        release = resolve;
+      });
+      this._transactionLocks.set(lockKey, promise);
+      return () => {
+        this._transactionLocks.delete(lockKey);
+        release();
+      };
+    };
+
+    const lockKey = cleanPath;
+    const releaseLock = await acquireLock(lockKey);
+
+    try {
+      let attempts = 0;
+      while (attempts < maxRetries) {
+        attempts++;
+        const currentData = await this.get(cleanPath);
+        const clonedCurrent = currentData !== null && currentData !== undefined
+          ? JSON.parse(JSON.stringify(currentData))
+          : null;
+
+        const updatedData = await transactionFn(clonedCurrent);
+
+        if (updatedData === undefined) {
+          return { committed: false, snapshot: clonedCurrent };
+        }
+
+        await this.set(cleanPath, updatedData);
+        return { committed: true, snapshot: updatedData };
+      }
+      throw new Error(`Transaction exceeded max retries (${maxRetries}) on path: ${cleanPath}`);
+    } finally {
+      releaseLock();
+    }
   }
 }
 

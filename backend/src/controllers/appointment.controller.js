@@ -1,12 +1,18 @@
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
 import { firebaseRtdbAdapter } from '../integrations/firebase/firebaseRtdbAdapter.js';
-import { schedulingService } from '../services/scheduling.service.js';
+import { schedulingService, getCanonicalSlotKey } from '../services/scheduling.service.js';
 import { notificationService } from '../services/notification.service.js';
 import { googleCalendarAdapter } from '../integrations/googleCalendar/googleCalendarAdapter.js';
 import { auditService } from '../services/audit.service.js';
 import { logger } from '../utils/logger.js';
+import crypto from 'crypto';
 
 export async function createAppointment(req, res, next) {
+  let reservationAcquired = false;
+  let reservationPsychId = null;
+  let reservationStartTime = null;
+  let reservationAptId = null;
+
   try {
     let {
       psychologistId,
@@ -19,6 +25,7 @@ export async function createAppointment(req, res, next) {
       patientNotes = '',
     } = req.body;
 
+    const user = req.user;
     sessionMode = sessionMode || mode || 'in_person';
     reason = reason || patientNotes || '';
 
@@ -29,7 +36,49 @@ export async function createAppointment(req, res, next) {
     if (date && /^\d{2}:\d{2}$/.test(endTime)) {
       endTime = `${date}T${endTime}:00.000Z`;
     }
-    const user = req.user;
+
+    // Standardize valid timestamp formats to canonical ISO UTC strings
+    const startObj = new Date(startTime);
+    const endObj = new Date(endTime);
+    if (!isNaN(startObj.getTime())) {
+      startTime = startObj.toISOString();
+    }
+    if (!isNaN(endObj.getTime())) {
+      endTime = endObj.toISOString();
+    }
+
+    // Task B4 & Task E: Idempotency Key Scoping, Format Validation & Payload Fingerprinting
+    const idempotencyKey = req.headers['x-idempotency-key'] || req.headers['idempotency-key'] || req.body.idempotencyKey;
+    let payloadFingerprint = null;
+    if (idempotencyKey) {
+      if (typeof idempotencyKey !== 'string' || idempotencyKey.length > 128 || !/^[\w-]+$/.test(idempotencyKey)) {
+        return errorResponse(res, 'Invalid idempotency key format.', 400, 'INVALID_IDEMPOTENCY_KEY');
+      }
+
+      // Compute deterministic payload fingerprint
+      payloadFingerprint = crypto
+        .createHash('sha256')
+        .update(JSON.stringify({ psychologistId, startTime, endTime, sessionMode }))
+        .digest('hex');
+
+      const cached = await firebaseRtdbAdapter.get(`idempotency/${user.uid}/${idempotencyKey}`);
+      if (cached && cached.appointmentId) {
+        // Enforce that same idempotency key cannot be reused for a different booking payload
+        if (cached.payloadFingerprint && cached.payloadFingerprint !== payloadFingerprint) {
+          return errorResponse(
+            res,
+            'Idempotency key was previously used with a different booking request payload.',
+            409,
+            'IDEMPOTENCY_PAYLOAD_MISMATCH'
+          );
+        }
+
+        const existingApt = await firebaseRtdbAdapter.get(`appointments/${cached.appointmentId}`);
+        if (existingApt) {
+          return successResponse(res, { appointment: existingApt }, cached.statusCode || 201);
+        }
+      }
+    }
 
     // Verify psychologist existence & active approved status
     let psychRecord = await firebaseRtdbAdapter.get(`psychologists/${psychologistId}`);
@@ -71,9 +120,6 @@ export async function createAppointment(req, res, next) {
       );
     }
 
-    // Enforce booking concurrency & conflict detection
-    await schedulingService.assertNoConflicts(psychologistId, startTime, endTime);
-
     const appointmentId = `apt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const sessionPin = schedulingService.generateSessionPin();
     const now = new Date().toISOString();
@@ -81,6 +127,17 @@ export async function createAppointment(req, res, next) {
 
     const isPsychologistBooking = user.role === 'psychologist';
     const patientId = isPsychologistBooking ? req.body.patientId || 'patient_direct' : user.uid;
+
+    // Task B2: Authoritative Atomic Slot Reservation
+    await schedulingService.reserveSlotAtomically(psychologistId, startTime, endTime, {
+      patientId,
+      appointmentId,
+      idempotencyKey: idempotencyKey || null,
+    });
+    reservationAcquired = true;
+    reservationPsychId = psychologistId;
+    reservationStartTime = startTime;
+    reservationAptId = appointmentId;
 
     // Fetch patient snapshot
     const patientRecord = await firebaseRtdbAdapter.get(`patients/${patientId}`);
@@ -135,8 +192,15 @@ export async function createAppointment(req, res, next) {
       updatedAt: now,
     };
 
-    // Save to RTDB
-    await firebaseRtdbAdapter.set(`appointments/${appointmentId}`, appointment);
+    // Save to RTDB with safe rollback of reservation if persistence fails
+    try {
+      await firebaseRtdbAdapter.set(`appointments/${appointmentId}`, appointment);
+    } catch (saveErr) {
+      if (reservationAcquired) {
+        await schedulingService.releaseSlotReservation(reservationPsychId, reservationStartTime, reservationAptId).catch(() => {});
+      }
+      throw saveErr;
+    }
 
     // If psychologist created and confirmed, attempt Google Calendar event sync
     if (initialStatus === 'confirmed') {
@@ -151,6 +215,18 @@ export async function createAppointment(req, res, next) {
         }
         await firebaseRtdbAdapter.set(`appointments/${appointmentId}`, appointment);
       }
+    }
+
+    // Store idempotency record
+    if (idempotencyKey) {
+      await firebaseRtdbAdapter.set(`idempotency/${user.uid}/${idempotencyKey}`, {
+        idempotencyKey,
+        userId: user.uid,
+        appointmentId,
+        payloadFingerprint,
+        statusCode: 201,
+        createdAt: now,
+      });
     }
 
     // Dispatch persistent notifications
@@ -175,6 +251,9 @@ export async function createAppointment(req, res, next) {
   } catch (err) {
     if (err.code === 'SLOT_ALREADY_RESERVED') {
       return errorResponse(res, err.message, 409, 'SLOT_ALREADY_RESERVED');
+    }
+    if (err.code === 'INVALID_TIME_INTERVAL' || err.code === 'INVALID_TIME_FORMAT') {
+      return errorResponse(res, err.message, 400, err.code);
     }
     next(err);
   }
@@ -276,6 +355,17 @@ export async function acceptAppointment(req, res, next) {
       status: 'confirmed',
     });
 
+    // Mark slot reservation confirmed
+    try {
+      const slotKey = getCanonicalSlotKey(appointment.startTime);
+      await firebaseRtdbAdapter.update(`slotReservations/${user.uid}/${slotKey}`, {
+        status: 'confirmed',
+        confirmedAt: now,
+      });
+    } catch (slotErr) {
+      logger.warn(`Could not update slot reservation status to confirmed: ${slotErr.message}`);
+    }
+
     // Attempt Google Calendar Event & Meet conference creation
     const syncResult = await googleCalendarAdapter.createCalendarEvent(appointment);
     appointment.calendarSyncStatus = syncResult.calendarSyncStatus;
@@ -342,6 +432,9 @@ export async function rejectAppointment(req, res, next) {
 
     await firebaseRtdbAdapter.set(`appointments/${appointmentId}`, appointment);
 
+    // Release slot reservation upon rejection
+    await schedulingService.releaseSlotReservation(appointment.psychologistId, appointment.startTime, appointmentId);
+
     // Notify patient
     await notificationService.notify({
       recipientUid: appointment.patientId,
@@ -389,6 +482,12 @@ export async function proposeAlternativeSlot(req, res, next) {
     if (date && /^\d{2}:\d{2}$/.test(endTime)) {
       endTime = `${date}T${endTime}:00.000Z`;
     }
+
+    // Standardize to ISO UTC
+    const sObj = new Date(startTime);
+    const eObj = new Date(endTime);
+    if (!isNaN(sObj.getTime())) startTime = sObj.toISOString();
+    if (!isNaN(eObj.getTime())) endTime = eObj.toISOString();
 
     // Verify proposed slot has no conflicts
     await schedulingService.assertNoConflicts(user.uid, startTime, endTime, appointmentId);
@@ -455,12 +554,16 @@ export async function respondToAlternative(req, res, next) {
     const now = new Date().toISOString();
 
     if (action === 'accept') {
-      // Re-assert no conflicts before locking
-      await schedulingService.assertNoConflicts(
+      // Atomically claim proposed slot and release old slot
+      await schedulingService.rescheduleSlotAtomically(
         appointment.psychologistId,
+        appointment.startTime,
         appointment.proposedSlot.startTime,
         appointment.proposedSlot.endTime,
-        appointmentId
+        {
+          patientId: appointment.patientId,
+          appointmentId,
+        }
       );
 
       appointment.startTime = appointment.proposedSlot.startTime;
@@ -509,6 +612,9 @@ export async function respondToAlternative(req, res, next) {
 
       await firebaseRtdbAdapter.set(`appointments/${appointmentId}`, appointment);
 
+      // Release slot reservation if rejected
+      await schedulingService.releaseSlotReservation(appointment.psychologistId, appointment.startTime, appointmentId);
+
       await notificationService.notify({
         recipientUid: appointment.psychologistId,
         type: 'appointment_update',
@@ -531,7 +637,7 @@ export async function respondToAlternative(req, res, next) {
 export async function rescheduleAppointment(req, res, next) {
   try {
     const { appointmentId } = req.params;
-    const { newStartTime, newEndTime, reason = '' } = req.body;
+    let { newStartTime, newEndTime, reason = '' } = req.body;
     const user = req.user;
     const appointment = await firebaseRtdbAdapter.get(`appointments/${appointmentId}`);
 
@@ -549,20 +655,25 @@ export async function rescheduleAppointment(req, res, next) {
       return errorResponse(res, 'Access denied.', 403, 'FORBIDDEN');
     }
 
+    // Standardize new times to canonical ISO UTC strings
+    const sObj = new Date(newStartTime);
+    const eObj = new Date(newEndTime);
+    if (!isNaN(sObj.getTime())) newStartTime = sObj.toISOString();
+    if (!isNaN(eObj.getTime())) newEndTime = eObj.toISOString();
+
     // Check reschedule cutoff policy
     const avail = await schedulingService.getAvailability(appointment.psychologistId);
     const cutoffHours = avail.reschedulingPolicy?.cutoffHours ?? 24;
     const hoursUntilAppointment = (new Date(appointment.startTime).getTime() - Date.now()) / (1000 * 60 * 60);
 
     const insideCutoff = hoursUntilAppointment < cutoffHours;
-
-    // Check conflict on new slot
-    await schedulingService.assertNoConflicts(appointment.psychologistId, newStartTime, newEndTime, appointmentId);
-
     const now = new Date().toISOString();
 
     if (isPatient && insideCutoff) {
       // Inside cutoff: patient submits reschedule request requiring clinician confirmation
+      // Validate no conflicts for proposed new time
+      await schedulingService.assertNoConflicts(appointment.psychologistId, newStartTime, newEndTime, appointmentId);
+
       appointment.status = 'reschedule_requested';
       appointment.rescheduleRequest = {
         newStartTime,
@@ -595,7 +706,18 @@ export async function rescheduleAppointment(req, res, next) {
       });
     }
 
-    // Direct reschedule permitted
+    // Direct reschedule permitted: atomically claim new slot and release old slot
+    await schedulingService.rescheduleSlotAtomically(
+      appointment.psychologistId,
+      appointment.startTime,
+      newStartTime,
+      newEndTime,
+      {
+        patientId: appointment.patientId,
+        appointmentId,
+      }
+    );
+
     const previousTime = { startTime: appointment.startTime, endTime: appointment.endTime };
     appointment.startTime = newStartTime;
     appointment.endTime = newEndTime;
@@ -613,7 +735,13 @@ export async function rescheduleAppointment(req, res, next) {
       await googleCalendarAdapter.updateCalendarEvent(appointment);
     }
 
-    await firebaseRtdbAdapter.set(`appointments/${appointmentId}`, appointment);
+    try {
+      await firebaseRtdbAdapter.set(`appointments/${appointmentId}`, appointment);
+    } catch (saveErr) {
+      // Revert reservation if appointment write failed
+      await schedulingService.releaseSlotReservation(appointment.psychologistId, newStartTime, appointmentId).catch(() => {});
+      throw saveErr;
+    }
 
     const otherUid = isPatient ? appointment.psychologistId : appointment.patientId;
     if (otherUid && otherUid !== 'patient_direct') {
@@ -655,6 +783,10 @@ export async function cancelAppointment(req, res, next) {
     }
     if (isPsychologist && appointment.psychologistId !== user.uid) {
       return errorResponse(res, 'Access denied.', 403, 'FORBIDDEN');
+    }
+
+    if (appointment.status === 'cancelled') {
+      return successResponse(res, { appointment, message: 'Appointment is already cancelled.' });
     }
 
     const avail = await schedulingService.getAvailability(appointment.psychologistId);
@@ -711,6 +843,9 @@ export async function cancelAppointment(req, res, next) {
     }
 
     await firebaseRtdbAdapter.set(`appointments/${appointmentId}`, appointment);
+
+    // Release atomic slot reservation
+    await schedulingService.releaseSlotReservation(appointment.psychologistId, appointment.startTime, appointmentId);
 
     const otherUid = isPatient ? appointment.psychologistId : appointment.patientId;
     if (otherUid && otherUid !== 'patient_direct') {

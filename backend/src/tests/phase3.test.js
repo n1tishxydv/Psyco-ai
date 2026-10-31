@@ -11,12 +11,12 @@ test('Phase 3: Appointment Booking, Availability, Calendar Management & Concurre
 
   const psychUid = 'psych_p3_01';
 
-  // Helper date: A future Wednesday 14 days from now
+  // Helper date: A future Wednesday 14 days from now (calculated in UTC to prevent midnight shifts)
   const targetDate = new Date();
-  targetDate.setDate(targetDate.getDate() + 14);
-  const dayOfWeek = targetDate.getDay();
+  targetDate.setUTCHours(12, 0, 0, 0);
+  const dayOfWeek = targetDate.getUTCDay();
   const diffToWed = (3 - dayOfWeek + 7) % 7;
-  targetDate.setDate(targetDate.getDate() + diffToWed);
+  targetDate.setUTCDate(targetDate.getUTCDate() + 14 + diffToWed);
   const futureWednesday = targetDate.toISOString().split('T')[0];
 
   let appointmentId1 = null;

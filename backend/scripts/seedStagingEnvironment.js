@@ -80,6 +80,7 @@ export async function seedStagingEnvironment(options = {}) {
     role: 'admin',
     accountStatus: 'active',
     onboardingStatus: 'completed',
+    isSynthetic: true,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -94,6 +95,7 @@ export async function seedStagingEnvironment(options = {}) {
     role: 'psychologist',
     accountStatus: 'active',
     onboardingStatus: 'completed',
+    isSynthetic: true,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -112,6 +114,7 @@ export async function seedStagingEnvironment(options = {}) {
     approvalStatus: 'approved',
     approvedAt: timestamp,
     onboardingStatus: 'completed',
+    isSynthetic: true,
     createdAt: timestamp,
   });
 
@@ -123,6 +126,7 @@ export async function seedStagingEnvironment(options = {}) {
     role: 'psychologist',
     accountStatus: 'active',
     onboardingStatus: 'completed',
+    isSynthetic: true,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -141,6 +145,7 @@ export async function seedStagingEnvironment(options = {}) {
     approvalStatus: 'approved',
     approvedAt: timestamp,
     onboardingStatus: 'completed',
+    isSynthetic: true,
     createdAt: timestamp,
   });
   console.log(' [✓] Seeded Synthetic Approved Psychologists: Dr. Sarah Jenkins & Dr. Marcus Vance');
@@ -154,6 +159,7 @@ export async function seedStagingEnvironment(options = {}) {
     role: 'patient',
     accountStatus: 'active',
     onboardingStatus: 'completed',
+    isSynthetic: true,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -169,6 +175,7 @@ export async function seedStagingEnvironment(options = {}) {
     age: 29,
     assignedPsychologistIds: { [psychUid1]: true },
     intakeStatus: 'completed',
+    isSynthetic: true,
     emergencyContact: {
       name: 'Jordan Mercer',
       relation: 'Sibling',
@@ -185,6 +192,7 @@ export async function seedStagingEnvironment(options = {}) {
     role: 'patient',
     accountStatus: 'active',
     onboardingStatus: 'completed',
+    isSynthetic: true,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -200,6 +208,7 @@ export async function seedStagingEnvironment(options = {}) {
     age: 34,
     assignedPsychologistIds: { [psychUid1]: true },
     intakeStatus: 'completed',
+    isSynthetic: true,
     emergencyContact: {
       name: 'David Lin',
       relation: 'Spouse',
@@ -216,6 +225,7 @@ export async function seedStagingEnvironment(options = {}) {
     role: 'patient',
     accountStatus: 'active',
     onboardingStatus: 'completed',
+    isSynthetic: true,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -231,6 +241,7 @@ export async function seedStagingEnvironment(options = {}) {
     age: 42,
     assignedPsychologistIds: { [psychUid2]: true },
     intakeStatus: 'completed',
+    isSynthetic: true,
     emergencyContact: {
       name: 'Susan Chen',
       relation: 'Partner',
@@ -247,6 +258,7 @@ export async function seedStagingEnvironment(options = {}) {
     role: 'patient',
     accountStatus: 'active',
     onboardingStatus: 'pending',
+    isSynthetic: true,
     createdAt: timestamp,
     updatedAt: timestamp,
   });
@@ -262,38 +274,59 @@ export async function seedStagingEnvironment(options = {}) {
     age: 26,
     assignedPsychologistIds: {},
     intakeStatus: 'pending',
+    isSynthetic: true,
     createdAt: timestamp,
   });
   console.log(' [✓] Seeded Synthetic Patients: Alex Mercer, Maya Lin, David Chen, Elena Rostova');
 
-  // 4. Psychologist Availability Rules
+  // 4. Psychologist Availability Rules (Canonical Schema)
   await firebaseRtdbAdapter.set(`${prefix}availability/${psychUid1}`, {
     psychologistId: psychUid1,
     weeklySchedule: {
-      monday: [{ start: '09:00', end: '17:00' }],
-      wednesday: [{ start: '09:00', end: '17:00' }],
-      friday: [{ start: '09:00', end: '17:00' }],
+      monday: [{ startTime: '09:00', endTime: '17:00', mode: 'both' }],
+      wednesday: [{ startTime: '09:00', endTime: '17:00', mode: 'both' }],
+      friday: [{ startTime: '09:00', endTime: '17:00', mode: 'both' }],
     },
-    bufferMinutes: 10,
-    sessionDuration: 50,
-    bookingLeadTimeHours: 24,
-    maxAdvanceBookingDays: 30,
+    bufferTimeMinutes: 10,
+    sessionDurationMinutes: 50,
+    bookingWindow: {
+      minNoticeHours: 24,
+      maxAdvanceDays: 30,
+    },
+    cancellationPolicy: {
+      cutoffHours: 24,
+    },
+    reschedulingPolicy: {
+      cutoffHours: 24,
+    },
+    offeredModes: 'both',
+    defaultMode: 'in_person',
     updatedAt: timestamp,
   });
 
   await firebaseRtdbAdapter.set(`${prefix}availability/${psychUid2}`, {
     psychologistId: psychUid2,
     weeklySchedule: {
-      tuesday: [{ start: '10:00', end: '18:00' }],
-      thursday: [{ start: '10:00', end: '18:00' }],
+      tuesday: [{ startTime: '10:00', endTime: '18:00', mode: 'both' }],
+      thursday: [{ startTime: '10:00', endTime: '18:00', mode: 'both' }],
     },
-    bufferMinutes: 10,
-    sessionDuration: 50,
-    bookingLeadTimeHours: 24,
-    maxAdvanceBookingDays: 30,
+    bufferTimeMinutes: 10,
+    sessionDurationMinutes: 50,
+    bookingWindow: {
+      minNoticeHours: 24,
+      maxAdvanceDays: 30,
+    },
+    cancellationPolicy: {
+      cutoffHours: 24,
+    },
+    reschedulingPolicy: {
+      cutoffHours: 24,
+    },
+    offeredModes: 'both',
+    defaultMode: 'in_person',
     updatedAt: timestamp,
   });
-  console.log(' [✓] Seeded Clinician Availability Rules for Dr. Jenkins and Dr. Vance');
+  console.log(' [✓] Seeded Clinician Availability Rules for Dr. Jenkins and Dr. Vance (Canonical Schema)');
   console.log(' [✓] Seeded Clinician Availability Rules (Mon/Wed/Fri 09:00-17:00, 50m session, 10m buffer)');
 
   const psychUid = psychUid1;
@@ -354,6 +387,7 @@ export async function seedStagingEnvironment(options = {}) {
     patientId: patientUid,
     psychologistId: psychUid,
     format: 'SOAP',
+    isDraft: true,
     status: 'draft',
     content: {
       subjective: '[STAGING] Patient reports moderate work-related performance anxiety and difficulty initiating sleep.',

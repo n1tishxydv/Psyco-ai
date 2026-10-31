@@ -1,6 +1,7 @@
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
 import { schedulingService } from '../services/scheduling.service.js';
 import { auditService } from '../services/audit.service.js';
+import { normalizeAvailability } from '../utils/availabilityNormalizer.js';
 
 export async function getOwnAvailability(req, res, next) {
   try {
@@ -15,54 +16,9 @@ export async function getOwnAvailability(req, res, next) {
 export async function updateOwnAvailability(req, res, next) {
   try {
     const psychologistId = req.user.uid;
-    const body = { ...req.body };
+    const normalizedBody = normalizeAvailability(req.body);
 
-    // Normalize weeklySchedule if days are single objects { enabled, startTime, endTime, mode }
-    if (body.weeklySchedule) {
-      const normalizedSchedule = {};
-      for (const [dayKey, dayVal] of Object.entries(body.weeklySchedule)) {
-        if (Array.isArray(dayVal)) {
-          normalizedSchedule[dayKey] = dayVal;
-        } else if (dayVal && typeof dayVal === 'object') {
-          if (dayVal.enabled !== false && dayVal.startTime && dayVal.endTime) {
-            normalizedSchedule[dayKey] = [
-              {
-                startTime: dayVal.startTime,
-                endTime: dayVal.endTime,
-                mode: dayVal.mode || 'both',
-              },
-            ];
-          } else {
-            normalizedSchedule[dayKey] = [];
-          }
-        } else {
-          normalizedSchedule[dayKey] = [];
-        }
-      }
-      body.weeklySchedule = normalizedSchedule;
-    }
-
-    // Normalize bufferTimeMinutes
-    if (body.bufferMinutes !== undefined && body.bufferTimeMinutes === undefined) {
-      body.bufferTimeMinutes = body.bufferMinutes;
-    }
-
-    // Normalize bookingWindow
-    if (body.minNoticeHours !== undefined || body.maxAdvanceDays !== undefined) {
-      body.bookingWindow = {
-        minNoticeHours: body.minNoticeHours !== undefined ? body.minNoticeHours : 2,
-        maxAdvanceDays: body.maxAdvanceDays !== undefined ? body.maxAdvanceDays : 60,
-      };
-    }
-
-    // Normalize cancellationPolicy
-    if (body.cancellationCutoffHours !== undefined) {
-      body.cancellationPolicy = {
-        cutoffHours: body.cancellationCutoffHours,
-      };
-    }
-
-    const updated = await schedulingService.updateAvailability(psychologistId, body);
+    const updated = await schedulingService.updateAvailability(psychologistId, normalizedBody);
 
     await auditService.record({
       action: 'AVAILABILITY_UPDATED',

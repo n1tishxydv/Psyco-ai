@@ -70,22 +70,49 @@ export function ReportsPage() {
 
   // Fetch assigned patients on mount
   useEffect(() => {
+    let isMounted = true;
     async function fetchPatients() {
       try {
         setLoadingPatients(true);
+        setError(null);
         const data = await clinicalService.getAssignedPatients();
-        setPatients(data || []);
-        if (data && data.length > 0) {
-          setSelectedPatientId(data[0].patientId);
+        if (!isMounted) return;
+
+        let normalizedList = [];
+        if (Array.isArray(data)) {
+          normalizedList = data;
+        } else if (data && typeof data === 'object') {
+          if (Array.isArray(data.data?.patients)) {
+            normalizedList = data.data.patients;
+          } else if (Array.isArray(data.patients)) {
+            normalizedList = data.patients;
+          } else if (Array.isArray(data.data)) {
+            normalizedList = data.data;
+          }
+        }
+
+        setPatients(normalizedList);
+        if (normalizedList.length > 0) {
+          const firstId = normalizedList[0].patientId || normalizedList[0].id || '';
+          setSelectedPatientId(firstId);
+        } else {
+          setSelectedPatientId('');
         }
       } catch (err) {
+        if (!isMounted) return;
         console.error('Failed to load assigned patients:', err);
-        setError('Could not load assigned patient roster.');
+        setError(err?.message || 'Could not load assigned patient roster.');
+        setPatients([]);
       } finally {
-        setLoadingPatients(false);
+        if (isMounted) {
+          setLoadingPatients(false);
+        }
       }
     }
     fetchPatients();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleGenerateReport = async (e) => {
@@ -110,7 +137,8 @@ export function ReportsPage() {
       };
 
       const res = await clinicalService.generateReport(selectedPatientId, payload);
-      setGeneratedReport(res);
+      const normalizedReport = res?.data?.report || res?.report || res?.data || res;
+      setGeneratedReport(normalizedReport);
     } catch (err) {
       console.error('Failed to generate report:', err);
       setError(err?.message || 'Error generating clinical report from records.');
@@ -125,19 +153,25 @@ export function ReportsPage() {
 
   const handleCopyText = () => {
     if (!generatedReport) return;
+    const sectionsText = Array.isArray(generatedReport.sections)
+      ? generatedReport.sections.map(s => `${(s.title || '').toUpperCase()}:\n${s.content || ''}`).join('\n\n')
+      : '';
     const text = `PSYCO AI CLINICAL REPORT: ${generatedReport.title || 'Summary'}\n` +
       `Date: ${new Date(generatedReport.generatedAt || Date.now()).toLocaleDateString()}\n` +
-      `Patient ID: ${generatedReport.patientId}\n` +
+      `Patient ID: ${generatedReport.patientId || 'N/A'}\n` +
       `Clinician: ${generatedReport.psychologistName || user?.fullName || 'Psychologist'}\n\n` +
       `SUMMARY:\n${generatedReport.summary || 'N/A'}\n\n` +
-      (generatedReport.sections ? generatedReport.sections.map(s => `${s.title.toUpperCase()}:\n${s.content}`).join('\n\n') : '');
+      sectionsText;
 
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const selectedPatient = patients.find(p => p.patientId === selectedPatientId);
+  const safePatients = Array.isArray(patients) ? patients : [];
+  const selectedPatient = safePatients.find(
+    p => (p?.patientId && p.patientId === selectedPatientId) || (p?.id && p.id === selectedPatientId)
+  ) || null;
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -191,7 +225,7 @@ export function ReportsPage() {
                       <RefreshCw className="w-3.5 h-3.5 animate-spin text-teal-400" />
                       Loading assigned roster...
                     </div>
-                  ) : patients.length === 0 ? (
+                  ) : safePatients.length === 0 ? (
                     <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60 text-xs text-slate-400">
                       No patients assigned yet. Consultations must be booked first.
                     </div>
@@ -201,11 +235,14 @@ export function ReportsPage() {
                       onChange={(e) => setSelectedPatientId(e.target.value)}
                       className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-teal-400"
                     >
-                      {patients.map((p) => (
-                        <option key={p.patientId} value={p.patientId}>
-                          {p.name || p.email} ({p.totalSessions || 0} sessions)
-                        </option>
-                      ))}
+                      {safePatients.map((p) => {
+                        const pid = p?.patientId || p?.id;
+                        return (
+                          <option key={pid} value={pid}>
+                            {p?.name || p?.fullName || p?.email || pid} ({p?.totalSessions || 0} sessions)
+                          </option>
+                        );
+                      })}
                     </select>
                   )}
                 </div>
@@ -294,7 +331,7 @@ export function ReportsPage() {
                   type="submit"
                   variant="primary"
                   size="md"
-                  disabled={generating || !selectedPatientId}
+                  disabled={generating || !selectedPatientId || safePatients.length === 0}
                   className="w-full flex items-center justify-center gap-2"
                 >
                   {generating ? (

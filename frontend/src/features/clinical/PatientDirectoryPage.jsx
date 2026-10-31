@@ -36,7 +36,7 @@ export function PatientDirectoryPage() {
       setLoading(true);
       setError(null);
       const res = await clinicalService.getPatients(query);
-      setPatients(res.data?.patients || []);
+      setPatients(Array.isArray(res) ? res : (res?.data?.patients || res?.patients || []));
     } catch (err) {
       console.error('Failed to load patients:', err);
       setError(err.message || 'Failed to fetch patients');

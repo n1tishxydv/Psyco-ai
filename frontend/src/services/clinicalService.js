@@ -1,11 +1,36 @@
 import { apiRequest } from './apiClient.js';
 
+/**
+ * Normalizes a patients response across array formats, envelope formats, and key-wrapped payloads.
+ * Returns an Array while preserving backward-compatible properties (.data.patients) for existing callers.
+ */
+function normalizePatientList(res) {
+  let list = [];
+  if (Array.isArray(res)) {
+    list = res;
+  } else if (res && typeof res === 'object') {
+    if (Array.isArray(res.data?.patients)) {
+      list = res.data.patients;
+    } else if (Array.isArray(res.patients)) {
+      list = res.patients;
+    } else if (Array.isArray(res.data)) {
+      list = res.data;
+    }
+  }
+
+  const safeArray = Array.isArray(list) ? [...list] : [];
+  // Backward compatibility for callers doing res.data?.patients or res.patients
+  safeArray.data = { patients: safeArray };
+  safeArray.patients = safeArray;
+  return safeArray;
+}
+
 export const clinicalService = {
   // Patient Management & Chart
   getPatients: async (search = '') => {
     const query = search ? `?search=${encodeURIComponent(search)}` : '';
     const res = await apiRequest(`/clinical/patients${query}`);
-    return res?.patients || res || [];
+    return normalizePatientList(res);
   },
 
   getAssignedPatients: async (search = '') => {
@@ -14,41 +39,45 @@ export const clinicalService = {
 
   getPatientChart: async (patientId) => {
     const res = await apiRequest(`/clinical/patients/${patientId}/chart`);
-    return res?.chart || res;
+    const chart = res?.data?.chart || res?.chart || res?.data || res;
+    if (chart && typeof chart === 'object' && !chart.data) {
+      chart.data = { chart };
+    }
+    return chart;
   },
 
   // Sessions
   getSession: async (sessionId) => {
     const res = await apiRequest(`/clinical/sessions/${sessionId}`);
-    return res?.session || res;
+    return res?.data?.session || res?.session || res?.data || res;
   },
 
   createOrGetSession: async (appointmentId) => {
     const res = await apiRequest(`/clinical/sessions/appointment/${appointmentId}`, {
       method: 'POST',
     });
-    return res?.session || res;
+    return res?.data?.session || res?.session || res?.data || res;
   },
 
   startSession: async (sessionId) => {
     const res = await apiRequest(`/clinical/sessions/${sessionId}/start`, {
       method: 'POST',
     });
-    return res?.session || res;
+    return res?.data?.session || res?.session || res?.data || res;
   },
 
   completeSession: async (sessionId) => {
     const res = await apiRequest(`/clinical/sessions/${sessionId}/complete`, {
       method: 'POST',
     });
-    return res?.session || res;
+    return res?.data?.session || res?.session || res?.data || res;
   },
 
   finalizeSession: async (sessionId) => {
     const res = await apiRequest(`/clinical/sessions/${sessionId}/finalize`, {
       method: 'POST',
     });
-    return res?.session || res;
+    return res?.data?.session || res?.session || res?.data || res;
   },
 
   // Notes
@@ -57,7 +86,7 @@ export const clinicalService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return res?.note || res;
+    return res?.data?.note || res?.note || res?.data || res;
   },
 
   finalizeNote: async (noteId, signatureData = {}) => {
@@ -65,7 +94,7 @@ export const clinicalService = {
       method: 'POST',
       body: JSON.stringify(signatureData),
     });
-    return res?.note || res;
+    return res?.data?.note || res?.note || res?.data || res;
   },
 
   amendNote: async (noteId, data) => {
@@ -73,7 +102,7 @@ export const clinicalService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return res?.note || res;
+    return res?.data?.note || res?.note || res?.data || res;
   },
 
   // Treatment Plans & Goals
@@ -82,7 +111,7 @@ export const clinicalService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return res?.plan || res;
+    return res?.data?.plan || res?.plan || res?.data || res;
   },
 
   updateTreatmentPlan: async (planId, data) => {
@@ -90,7 +119,7 @@ export const clinicalService = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-    return res?.plan || res;
+    return res?.data?.plan || res?.plan || res?.data || res;
   },
 
   updatePlanGoal: async (planId, goalId, data) => {
@@ -98,7 +127,7 @@ export const clinicalService = {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
-    return res?.plan || res;
+    return res?.data?.plan || res?.plan || res?.data || res;
   },
 
   // Tasks & Homework
@@ -107,7 +136,7 @@ export const clinicalService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return res?.task || res;
+    return res?.data?.task || res?.task || res?.data || res;
   },
 
   updateTaskStatus: async (taskId, data) => {
@@ -115,7 +144,7 @@ export const clinicalService = {
       method: 'PATCH',
       body: JSON.stringify(typeof data === 'string' ? { status: data } : data),
     });
-    return res?.task || res;
+    return res?.data?.task || res?.task || res?.data || res;
   },
 
   toggleHomeworkStatus: async (taskId, isCompleted) => {
@@ -130,7 +159,7 @@ export const clinicalService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return res?.recommendation || res;
+    return res?.data?.recommendation || res?.recommendation || res?.data || res;
   },
 
   createPrescriptionRecord: async (data) => {
@@ -138,7 +167,7 @@ export const clinicalService = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return res?.prescription || res;
+    return res?.data?.prescription || res?.prescription || res?.data || res;
   },
 
   // Reports
@@ -150,12 +179,13 @@ export const clinicalService = {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-    return res?.report || res;
+    return res?.data?.report || res?.report || res?.data || res;
   },
 
   // Patient Care Portal
   getPatientCarePortalData: async () => {
-    return apiRequest('/clinical/patient-portal/records');
+    const res = await apiRequest('/clinical/patient-portal/records');
+    return res?.data || res;
   },
 
   getPatientPortalRecords: async () => {

@@ -47,7 +47,7 @@ export function TreatmentPlansPage() {
       setError(null);
       // Fetch patients
       const pRes = await clinicalService.getPatients();
-      const patList = pRes.data?.patients || [];
+      const patList = Array.isArray(pRes) ? pRes : (pRes?.data?.patients || pRes?.patients || []);
       setPatients(patList);
 
       // Collect treatment plans across all assigned patients

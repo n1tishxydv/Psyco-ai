@@ -15,10 +15,31 @@ class AssemblyAIAdapter {
 
   getStatus() {
     const configured = this.isConfigured();
+    const isSandbox = Boolean(config.aiSandbox?.sandboxMode);
+    const liveEnabled = Boolean(config.aiSandbox?.assemblyaiLiveEnabled);
+
+    if (isSandbox || !liveEnabled) {
+      return {
+        service: this.name,
+        configured,
+        status: 'SANDBOX_MOCK_ACTIVE',
+        liveEnabled: false,
+        sandboxMode: true,
+        endpoint: this.wsUrl,
+        targetPhase: 'Phase 6.3 (AI Sandbox & Vendor Privacy Safeguards)',
+        zeroAudioPersistenceEnforced: true,
+        audioFormat: 'PCM16 Mono 16000Hz (Synthetic Test Audio Only)',
+        message:
+          'AssemblyAI external streaming blocked pending account-level training opt-out clearance. Synthetic audio sandbox active.',
+      };
+    }
+
     return {
       service: this.name,
       configured,
       status: configured ? 'CONFIGURED' : 'UNCONFIGURED',
+      liveEnabled: true,
+      sandboxMode: false,
       endpoint: this.wsUrl,
       targetPhase: 'Phase 5 (Session Transcription & Transcript Management)',
       zeroAudioPersistenceEnforced: true,
@@ -30,19 +51,30 @@ class AssemblyAIAdapter {
   }
 
   /**
-   * Generates a short-lived temporary authentication token for client WebSocket connection
+   * Generates a short-lived temporary authentication token for client WebSocket connection.
+   * Enforces Phase 6.3 Sandbox Guard: blocks external HTTP calls unless ASSEMBLYAI_LIVE_ENABLED=true and AI_SANDBOX_MODE=false.
+   *
    * @param {number} expiresInSeconds - Redemption window (1 to 600s, default 60)
-   * @returns {Promise<{ token: string, wsUrl: string, expiresInSeconds: number }>}
+   * @returns {Promise<{ token: string, wsUrl: string, expiresInSeconds: number, isSimulated: boolean, isSandbox: boolean, sandboxMode: boolean, provider: string }>}
    */
   async createStreamingToken(expiresInSeconds = 60) {
-    if (!this.isConfigured()) {
-      logger.info('AssemblyAI API key not set; generating simulated ephemeral token for dev/testing');
-      const mockToken = `mock_aai_token_${crypto.randomBytes(16).toString('hex')}`;
+    const isSandbox = Boolean(config.aiSandbox?.sandboxMode);
+    const liveEnabled = Boolean(config.aiSandbox?.assemblyaiLiveEnabled);
+
+    // AI Sandbox Guard: Block outbound token requests until account-level opt-out is verified
+    if (isSandbox || !liveEnabled || !this.isConfigured()) {
+      logger.info(
+        `[AI SANDBOX GUARD] AssemblyAI live streaming token blocked (sandboxMode=${isSandbox}, liveEnabled=${liveEnabled}). Returning synthetic test token.`
+      );
+      const mockToken = `sandbox_mock_token_${crypto.randomBytes(16).toString('hex')}`;
       return {
         token: mockToken,
         wsUrl: `${this.wsUrl}?token=${mockToken}&sample_rate=16000`,
         expiresInSeconds,
         isSimulated: true,
+        isSandbox: true,
+        sandboxMode: true,
+        provider: 'mock',
       };
     }
 
@@ -68,6 +100,9 @@ class AssemblyAIAdapter {
         wsUrl: `${this.wsUrl}?token=${data.token}&sample_rate=16000`,
         expiresInSeconds,
         isSimulated: false,
+        isSandbox: false,
+        sandboxMode: false,
+        provider: 'assemblyai',
       };
     } catch (err) {
       if (err.status) throw err;

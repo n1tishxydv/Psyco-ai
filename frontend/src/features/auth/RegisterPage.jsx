@@ -326,6 +326,22 @@ export function RegisterPage() {
                   </span>
                 </div>
 
+                <p className="text-[11px] text-slate-400 text-center leading-relaxed">
+                  By registering, you acknowledge and agree to the Psyco AI{' '}
+                  <Link to="/terms" className="text-softTeal underline hover:text-teal-300" target="_blank">
+                    Terms of Service
+                  </Link>
+                  ,{' '}
+                  <Link to="/privacy-policy" className="text-softTeal underline hover:text-teal-300" target="_blank">
+                    Privacy Policy
+                  </Link>
+                  , and{' '}
+                  <Link to="/medical-disclaimer" className="text-softTeal underline hover:text-teal-300" target="_blank">
+                    Medical Disclaimer
+                  </Link>
+                  .
+                </p>
+
                 <Button
                   type="submit"
                   variant="primary"
@@ -430,6 +446,22 @@ export function RegisterPage() {
                   onChange={(e) => setPsychologistData({ ...psychologistData, password: e.target.value })}
                   disabled={loading}
                 />
+
+                <p className="text-[11px] text-slate-400 text-center leading-relaxed">
+                  By registering as a clinician, you certify your active professional license and agree to the Psyco AI{' '}
+                  <Link to="/terms" className="text-softTeal underline hover:text-teal-300" target="_blank">
+                    Terms of Service
+                  </Link>
+                  ,{' '}
+                  <Link to="/ai-transparency" className="text-softTeal underline hover:text-teal-300" target="_blank">
+                    AI Transparency Policy
+                  </Link>
+                  , and{' '}
+                  <Link to="/data-privacy" className="text-softTeal underline hover:text-teal-300" target="_blank">
+                    Data Privacy Architecture
+                  </Link>
+                  .
+                </p>
 
                 <Button
                   type="submit"

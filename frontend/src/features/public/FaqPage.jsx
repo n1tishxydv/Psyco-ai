@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { FaqSection } from './components/FaqSection';
 
 export function FaqPage() {

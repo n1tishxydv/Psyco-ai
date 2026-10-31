@@ -465,27 +465,40 @@ export function BookingPage() {
               onChange={(e) => setReason(e.target.value)}
             />
 
-            <div className="pt-2 flex items-center justify-between border-t border-slate-800">
-              <div className="text-xs text-slate-400">
-                {selectedSlot ? (
-                  <span>
-                    Selected: <span className="text-teal-300 font-semibold">{new Date(selectedSlot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span> ({selectedMode.replace('_', ' ')})
-                  </span>
-                ) : (
-                  <span className="text-slate-500 italic">Please select a time slot above.</span>
-                )}
-              </div>
+            <div className="pt-2 space-y-3 border-t border-slate-800">
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                By requesting this appointment, you agree to our{' '}
+                <a href="/terms#appointments" target="_blank" rel="noopener noreferrer" className="text-teal-400 underline hover:text-teal-300">
+                  Appointment & Cancellation Policy
+                </a>{' '}
+                and acknowledge the{' '}
+                <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-teal-400 underline hover:text-teal-300">
+                  Privacy Policy
+                </a>.
+              </p>
 
-              <Button
-                type="submit"
-                variant="primary"
-                size="md"
-                disabled={!selectedSlot || submitting}
-                className="flex items-center gap-2"
-              >
-                {submitting ? <LoadingSpinner size="sm" /> : <CalendarIcon className="w-4 h-4" />}
-                Confirm & Request Booking
-              </Button>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="text-xs text-slate-400">
+                  {selectedSlot ? (
+                    <span>
+                      Selected: <span className="text-teal-300 font-semibold">{new Date(selectedSlot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span> ({selectedMode.replace('_', ' ')})
+                    </span>
+                  ) : (
+                    <span className="text-slate-500 italic">Please select a time slot above.</span>
+                  )}
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  disabled={!selectedSlot || submitting}
+                  className="flex items-center gap-2 w-full sm:w-auto"
+                >
+                  {submitting ? <LoadingSpinner size="sm" /> : <CalendarIcon className="w-4 h-4" />}
+                  Confirm & Request Booking
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

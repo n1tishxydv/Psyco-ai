@@ -6,6 +6,7 @@ import app from '../app.js';
 import config from '../config/index.js';
 import { firebaseRtdbAdapter } from '../integrations/firebase/firebaseRtdbAdapter.js';
 import { seedStagingEnvironment } from '../../scripts/seedStagingEnvironment.js';
+import { restoreStagingBackup } from '../../scripts/restoreStagingBackup.js';
 
 test('PSYCO AI Phase 13: Staging Safety & Repeatable Environment Guards', async (t) => {
 
@@ -171,5 +172,65 @@ test('PSYCO AI Phase 13: Staging Safety & Repeatable Environment Guards', async 
     assert.equal(bodyString.includes('AIzaSy'), false);
     assert.equal(bodyString.includes('GOCSPX'), false);
     assert.equal(bodyString.includes(config.firebase.apiKey || 'NEVER_MATCH'), false);
+  });
+
+  await t.test('10. Recovery Guard: Production target is strictly rejected by restoreStagingBackup', async () => {
+    const originalProjectId = config.firebase.projectId;
+    const originalDbUrl = config.firebase.databaseURL;
+
+    try {
+      config.firebase.projectId = 'psyco-9c13d';
+      config.firebase.databaseURL = 'https://psyco-9c13d-default-rtdb.firebaseio.com';
+
+      await assert.rejects(
+        async () => {
+          await restoreStagingBackup({
+            stagingOnly: true,
+            confirm: true,
+            backupFile: 'test.json',
+          });
+        },
+        {
+          name: 'Error',
+          message: /Production environment detected/,
+        }
+      );
+    } finally {
+      config.firebase.projectId = originalProjectId;
+      config.firebase.databaseURL = originalDbUrl;
+    }
+  });
+
+  await t.test('11. Recovery Guard: Missing --staging-only flag aborts restoreStagingBackup', async () => {
+    await assert.rejects(
+      async () => {
+        await restoreStagingBackup({
+          stagingOnly: false,
+          confirm: true,
+          backupFile: 'test.json',
+        });
+      },
+      {
+        name: 'Error',
+        message: /The --staging-only flag is required/,
+      }
+    );
+  });
+
+  await t.test('12. Recovery Guard: Missing confirmation flag aborts live restoreStagingBackup', async () => {
+    await assert.rejects(
+      async () => {
+        await restoreStagingBackup({
+          stagingOnly: true,
+          confirm: false,
+          dryRun: false,
+          backupFile: 'test.json',
+        });
+      },
+      {
+        name: 'Error',
+        message: /Explicit confirmation required/,
+      }
+    );
   });
 });

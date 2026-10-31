@@ -895,7 +895,14 @@ export function PatientIntakePage() {
                   />
                   <div className="text-xs text-slate-300 leading-relaxed">
                     <span className="font-semibold text-slate-100 block">Consent to Psychotherapy & Consultation *</span>
-                    I voluntarily agree to receive mental health assessment and therapeutic care provided by licensed clinicians on Psyco AI.
+                    I voluntarily agree to receive mental health assessment and therapeutic care provided by licensed clinicians on Psyco AI. (See{' '}
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-teal-400 underline hover:text-teal-300">
+                      Terms of Service
+                    </a>{' '}
+                    and{' '}
+                    <a href="/medical-disclaimer" target="_blank" rel="noopener noreferrer" className="text-teal-400 underline hover:text-teal-300">
+                      Medical Disclaimer
+                    </a>)
                   </div>
                 </label>
 
@@ -914,7 +921,10 @@ export function PatientIntakePage() {
                   />
                   <div className="text-xs text-slate-300 leading-relaxed">
                     <span className="font-semibold text-slate-100 block">AI Documentation Assistant Acknowledgement *</span>
-                    I acknowledge that Psyco AI assists clinicians with clinical documentation summaries and that all documentation is verified by human professionals.
+                    I acknowledge that Psyco AI assists clinicians with clinical documentation summaries and that all documentation is verified by human professionals. (See{' '}
+                    <a href="/ai-transparency" target="_blank" rel="noopener noreferrer" className="text-teal-400 underline hover:text-teal-300">
+                      AI Transparency Framework
+                    </a>)
                   </div>
                 </label>
 
@@ -933,7 +943,10 @@ export function PatientIntakePage() {
                   />
                   <div className="text-xs text-slate-300 leading-relaxed">
                     <span className="font-semibold text-slate-100 block">Session Delivery & Telehealth Consent *</span>
-                    I agree to the practice policies regarding in-person clinic attendance and secure online telehealth video sessions.
+                    I agree to the practice policies regarding in-person clinic attendance and secure online telehealth video sessions. (See{' '}
+                    <a href="/terms#appointments" target="_blank" rel="noopener noreferrer" className="text-teal-400 underline hover:text-teal-300">
+                      Appointment Policies
+                    </a>)
                   </div>
                 </label>
 
@@ -951,8 +964,15 @@ export function PatientIntakePage() {
                     className="mt-1 accent-teal-400 rounded"
                   />
                   <div className="text-xs text-slate-300 leading-relaxed">
-                    <span className="font-semibold text-slate-100 block">Data Privacy & HIPAA Principles *</span>
-                    I have read and agree to the Psyco AI Data Privacy Policy and terms governing confidential clinical records.
+                    <span className="font-semibold text-slate-100 block">Data Privacy & Clinical Confidentiality *</span>
+                    I have read and agree to the Psyco AI Privacy Policy and technical architecture governing confidential clinical records. (See{' '}
+                    <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-teal-400 underline hover:text-teal-300">
+                      Privacy Policy
+                    </a>{' '}
+                    and{' '}
+                    <a href="/data-privacy" target="_blank" rel="noopener noreferrer" className="text-teal-400 underline hover:text-teal-300">
+                      Data Privacy Architecture
+                    </a>)
                   </div>
                 </label>
               </div>

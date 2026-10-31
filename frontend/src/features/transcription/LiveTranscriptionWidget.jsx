@@ -281,6 +281,14 @@ export function LiveTranscriptionWidget({ session, appointment, onTranscriptComp
           </div>
         </div>
 
+        {/* Phase 6.3 AI Sandbox Mode Banner */}
+        <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-start gap-2.5 text-xs text-amber-300">
+          <ShieldCheck className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+          <div className="leading-relaxed">
+            <span className="font-semibold text-amber-200">AI Sandbox Mode (Staging Pilot):</span> Real clinical audio processing to AssemblyAI is blocked pending model-training opt-out verification. Synthetic test audio only is permitted in this designated sandbox. Zero raw audio persistence enforced.
+          </div>
+        </div>
+
         {/* 50-minute Warning Alert */}
         {elapsedSeconds >= 3000 && (
           <div className="mt-4 p-3 bg-amber-500/15 border border-amber-500/30 rounded-lg flex items-center gap-2.5 text-xs text-amber-300">

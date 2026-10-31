@@ -169,6 +169,8 @@ export function validateFirebaseProjectAlignment({ projectId, clientEmail, datab
   };
 }
 
+import { resolveAiSandboxConfig } from './aiSandboxConfig.js';
+
 const defaultProjectId = process.env.NODE_ENV === 'production' ? 'psyco-9c13d' : 'psyco-ai-staging';
 const defaultDatabaseURL = process.env.NODE_ENV === 'production'
   ? 'https://psyco-9c13d-default-rtdb.firebaseio.com'
@@ -177,6 +179,9 @@ const defaultDatabaseURL = process.env.NODE_ENV === 'production'
 const resolvedProjectId = process.env.FIREBASE_PROJECT_ID || defaultProjectId;
 const resolvedDatabaseURL = process.env.FIREBASE_DATABASE_URL || defaultDatabaseURL;
 
+// Resolve and validate AI Sandbox configuration (fails closed if inconsistent)
+const aiSandbox = resolveAiSandboxConfig(process.env);
+
 const config = {
   env: process.env.NODE_ENV || 'development',
   isProduction: process.env.NODE_ENV === 'production',
@@ -184,6 +189,9 @@ const config = {
   apiPrefix: process.env.API_PREFIX || '/api/v1',
   frontendUrl: configuredFrontendOrigins[0] || 'http://localhost:5173',
   allowedOrigins,
+
+  // Phase 6.3 AI Sandbox & Vendor Privacy Safeguards
+  aiSandbox,
 
   defaults: {
     timezone: process.env.DEFAULT_TIMEZONE || 'Asia/Kolkata',

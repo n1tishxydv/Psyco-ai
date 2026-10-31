@@ -397,9 +397,11 @@ export default function AiCopilotPanel({ sessionId, appointment, onDraftApproved
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                  Gemini Clinical Documentation Copilot
-                  <Badge variant="purple" size="sm">
-                    {copilotStatus?.model || 'gemini-2.5-flash'}
+                  Clinical Documentation Copilot
+                  <Badge variant={copilotStatus?.sandboxMode || copilotStatus?.status === 'SANDBOX_MOCK_ACTIVE' ? 'amber' : 'purple'} size="sm">
+                    {copilotStatus?.sandboxMode || copilotStatus?.status === 'SANDBOX_MOCK_ACTIVE'
+                      ? 'AI Sandbox: Mock Provider'
+                      : (copilotStatus?.model || 'gemini-3.8-flash')}
                   </Badge>
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -421,6 +423,16 @@ export default function AiCopilotPanel({ sessionId, appointment, onDraftApproved
           </div>
         </CardContent>
       </Card>
+
+      {/* Phase 6.3 AI Sandbox Safeguard Notice */}
+      {(copilotStatus?.sandboxMode || copilotStatus?.status === 'SANDBOX_MOCK_ACTIVE') && (
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2.5 shadow-sm">
+          <Shield className="w-4 h-4 flex-shrink-0 text-amber-400 mt-0.5" />
+          <div className="leading-relaxed">
+            <span className="font-semibold text-amber-200">AI Sandbox Mode Active (Staging Pilot):</span> External Google Gemini API calls are disabled. All generated documentation drafts are synthetic mock outputs (<code className="text-amber-200 font-mono text-[11px]">isSynthetic: true</code>). Real patient records are not transmitted externally. Psychologist review and digital signature remain strictly mandatory before clinical commitment.
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       {error && (
@@ -648,10 +660,15 @@ export default function AiCopilotPanel({ sessionId, appointment, onDraftApproved
                       ? 'Clinician Edited Draft'
                       : 'Pending Clinician Review'}
                   </Badge>
+                  {(activeDraft.isSynthetic || activeDraft.isMock || activeDraft.sandboxMode) && (
+                    <Badge variant="amber" size="sm">
+                      Synthetic Sandbox Draft
+                    </Badge>
+                  )}
                   <span className="text-[11px] text-slate-400">Version {activeDraft.version || 1}</span>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  Source Transcript Version: {activeDraft.sourceTranscriptVersion || 1} • Model: {activeDraft.modelUsed || 'Gemini'}
+                  Source Transcript Version: {activeDraft.sourceTranscriptVersion || 1} • Model: {activeDraft.modelUsed || 'Mock Clinical Engine'} • Mode: {activeDraft.isSynthetic ? 'Deterministic Synthetic' : 'Live'}
                 </p>
               </div>
 

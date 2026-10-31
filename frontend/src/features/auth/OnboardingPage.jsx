@@ -523,7 +523,14 @@ export function OnboardingPage() {
                         Informed Consent for Psychotherapy & Clinical Consultations *
                       </span>
                       <span className="text-[11px] text-slate-400 block leading-relaxed">
-                        I understand that consultations are provided by licensed mental health professionals and that I have the right to discuss treatment plans, risks, and alternatives.
+                        I understand that consultations are provided by licensed mental health professionals and that I have the right to discuss treatment plans, risks, and alternatives. (See{' '}
+                        <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-softTeal underline hover:text-teal-300">
+                          Terms of Service
+                        </a>{' '}
+                        and{' '}
+                        <a href="/medical-disclaimer" target="_blank" rel="noopener noreferrer" className="text-softTeal underline hover:text-teal-300">
+                          Medical Disclaimer
+                        </a>)
                       </span>
                     </div>
                   </label>
@@ -541,7 +548,10 @@ export function OnboardingPage() {
                         AI Clinical Copilot & Ephemeral Transcription Disclosure *
                       </span>
                       <span className="text-[11px] text-slate-400 block leading-relaxed">
-                        I acknowledge that Psyco AI provides ephemeral ambient documentation assistance. Audio is never persistently stored on disk; AI drafts are reviewed and approved exclusively by licensed clinicians.
+                        I acknowledge that Psyco AI provides ephemeral ambient documentation assistance. Audio is never persistently stored on disk; AI drafts are reviewed and approved exclusively by licensed clinicians. (See{' '}
+                        <a href="/ai-transparency" target="_blank" rel="noopener noreferrer" className="text-softTeal underline hover:text-teal-300">
+                          AI Transparency & Safety Policy
+                        </a>)
                       </span>
                     </div>
                   </label>
@@ -556,10 +566,17 @@ export function OnboardingPage() {
                     />
                     <div className="space-y-0.5">
                       <span className="text-xs font-semibold text-slate-100 block">
-                        Data Confidentiality & HIPAA-Aligned Storage Notice *
+                        Data Confidentiality & Privacy Architecture Notice *
                       </span>
                       <span className="text-[11px] text-slate-400 block leading-relaxed">
-                        I agree to the Psyco AI Privacy Policy. Protected health data is encrypted and accessible only to me and my designated treating psychologist.
+                        I agree to the Psyco AI Privacy Policy. Protected health data is encrypted and accessible only to me and my designated treating psychologist under strict ReBAC controls. (See{' '}
+                        <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-softTeal underline hover:text-teal-300">
+                          Privacy Policy
+                        </a>{' '}
+                        and{' '}
+                        <a href="/data-privacy" target="_blank" rel="noopener noreferrer" className="text-softTeal underline hover:text-teal-300">
+                          Data Privacy Architecture
+                        </a>)
                       </span>
                     </div>
                   </label>

@@ -68,7 +68,22 @@ export function AuthProvider({ children }) {
       setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    const handleSessionExpired = () => {
+      localStorage.removeItem('psyco_token');
+      setUserProfile(null);
+      setFirebaseUser(null);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('psyco:session-expired', handleSessionExpired);
+    }
+
+    return () => {
+      unsubscribe();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('psyco:session-expired', handleSessionExpired);
+      }
+    };
   }, [syncBackendProfile]);
 
   const loginWithEmail = async (email, password) => {

@@ -2,41 +2,46 @@
 
 > **"Less time on paperwork. More time for patient care."**
 
-Psyco AI is a modern, HIPAA/clinical-privacy aligned, web-based mental health practice-management SaaS built specifically for clinical psychologists, psychotherapists, and mental health professionals.
+Psyco AI is a modern, privacy-focused, web-based mental health practice-management SaaS built specifically for clinical psychologists, psychotherapists, and outpatient mental health clinics.
 
-The platform provides end-to-end clinical workflow automation: from patient intake, psychometrics (PHQ-9, GAD-7, C-SSRS), and conflict-free scheduling, to ambient consultation transcription, AI-assisted SOAP/DAP clinical documentation drafts with mandatory human-in-the-loop review, and longitudinal treatment plan tracking.
+The platform provides end-to-end clinical workflow automation: from patient intake, psychometrics (PHQ-9, GAD-7, C-SSRS), and conflict-free scheduling, to consultation transcription, clinical documentation drafts with mandatory human-in-the-loop review, and longitudinal treatment plan tracking.
 
 ---
 
-## 1. Project Overview & Main Features
+## 1. Staging Deployments & Project Infrastructure
+
+* **Frontend Staging:** [https://psyco-ai-staging.web.app](https://psyco-ai-staging.web.app/) (Firebase Hosting)
+* **Backend Staging:** [https://psyco-ai.onrender.com](https://psyco-ai.onrender.com/) (Render Web Service)
+* **Staging Database:** [https://psyco-ai-staging-default-rtdb.firebaseio.com](https://psyco-ai-staging-default-rtdb.firebaseio.com/) (Firebase Realtime Database)
+* **Repository:** [https://github.com/n1tishxydv/Psyco-ai](https://github.com/n1tishxydv/Psyco-ai)
+* **Production Guard:** Production project (`psyco-9c13d`) is strictly isolated and untouchable from staging tooling and automated tests.
+
+---
+
+## 2. Core Features & Portals
 
 * **Three Role-Gated Portals:**
   * **Patient Portal:** Appointment booking, self-assessment intake forms, psychometric screener runners, and care plan access.
-  * **Psychologist Portal:** Practice schedule management, therapeutic chart reviews, live session transcription, AI documentation copilot, and diagnostic assessment dispatch.
-  * **Administrator Portal:** System uptime metrics, practitioner onboarding/license approval, and operational audit logs (strictly barred from private clinical psychotherapy notes).
-* **Strict Human-in-the-Loop AI Copilot:** Google Gemini generates draft clinical documentation (SOAP, DAP, BIRP) which remain strictly in `draft` status until explicitly edited and approved by the licensed clinician.
-* **Ambient Transcription:** Real-time speech-to-text powered by AssemblyAI v3 WebSocket streaming with strict zero-binary media persistence.
+  * **Psychologist Portal:** Practice schedule management, therapeutic chart reviews, consultation transcription, clinical documentation copilot, and diagnostic assessment dispatch.
+  * **Administrator Portal:** System uptime metrics, practitioner credential review/approval, and operational audit logs (strictly barred from private clinical psychotherapy notes and patient charts).
+* **AI Sandbox Safeguards (Phase 6.3):**
+  * **Fail-Closed Isolation:** `AI_SANDBOX_MODE=true` ensures external Google Gemini and AssemblyAI live endpoints are disabled (`GEMINI_CLINICAL_LIVE_ENABLED=false`, `ASSEMBLYAI_LIVE_ENABLED=false`).
+  * **Deterministic Synthetic Output:** AI assistance utilizes a deterministic mock provider with verified synthetic inputs only; zero identifiable clinical data is transmitted externally.
+  * **Mandatory Human-in-the-Loop Review:** All generated clinical drafts (SOAP, DAP, BIRP) remain in `draft` status until explicitly edited, signed, and approved by a verified psychologist. The system never diagnoses or prescribes autonomously.
 * **Scheduling & Telehealth Integration:** Google Calendar API v3 integration with automated Google Meet video room creation and conflict detection.
 * **Clinical Safety Interceptors:** Deterministic Q9 suicide risk safety gate (C-SSRS / PHQ-9 Item 9) that enforces immediate clinical acknowledgment before session finalization.
 
 ---
 
-## 2. Technology Stack & Architecture
+## 3. Technology Stack & Storage Architecture
 
 * **Frontend:** React 18, Vite 6, Tailwind CSS, Lucide React icons, Context API for state management.
 * **Backend:** Node.js 20+, Express.js, versioned REST API (`/api/v1`), Zod request validation, Helmet, CORS, and rate limiting.
-* **Database:** **Firebase Realtime Database (Mandatory).** All persistent clinical data is structured text-only JSON. No Firestore or binary bucket dependencies.
-* **Authentication:** Firebase Authentication (Email/Password & Google Sign-In) with cryptographic server-side JWT verification.
-* **AI & Machine Learning:** Google Gemini (`@google/genai` SDK) and AssemblyAI v3 API.
-* **Integrations:** Google Calendar API v3 and Google Meet API v2.
-
----
-
-## 3. Storage Invariants & Clinical Privacy
-
-* **Strict Zero-Binary Media Policy:** Psyco AI explicitly forbids the storage of raw MP3, WAV, WebM, JPEG, or Base64 audio/image media in the database.
-* **Ephemeral Audio Processing:** Streaming audio chunks are processed transiently in-memory and wiped immediately once transcript entries are emitted.
-* **Privacy Boundary for Administrators:** Express route guards and Firebase RTDB security rules enforce that administrative accounts receive `403 Forbidden` if attempting to access clinical psychotherapy charts or session notes.
+* **Database:** **Firebase Realtime Database (Sole Database).** All persistent clinical data is structured text-only JSON. No Firestore, SQL, or binary bucket dependencies.
+* **Authentication:** Firebase Authentication (Email/Password & Google Sign-In) with cryptographic server-side JWT verification and automated token renewal.
+* **Strict Zero-Binary Media Policy:** Psyco AI explicitly forbids the storage of raw MP3, WAV, WebM, JPEG, or Base64 audio/image media in persistent storage.
+* **Ephemeral Audio Processing:** Streaming audio chunks are processed transiently in-memory and wiped immediately.
+* **Administrative Clinical Lockout:** Express route guards (`blockAdminFromClinicalRecords`) and RTDB rules enforce that administrative accounts receive `403 Forbidden` (`ADMIN_CLINICAL_ACCESS_PROHIBITED`) if attempting to access clinical psychotherapy charts or session notes. No unsupported regulatory certifications are claimed.
 
 ---
 
@@ -199,9 +204,9 @@ Run the comprehensive native Node.js test suite:
 npm test
 ```
 
-* Total Automated Tests: **131 tests** across 13 test suites.
-* Scope: Security rules, ReBAC isolation, JWT verification, suicide safety gates, ReDoS/Zod validations, text-only storage policies, and staging environment shields.
-* Pass Rate: **100% (131/131 passing)**.
+* Total Automated Tests: **250 tests** across 22 test suites (`node --test src/tests/*.test.js`).
+* Scope: Security rules, ReBAC isolation, JWT verification, token renewal, suicide safety gates, ReDoS/Zod validations, text-only storage policies, AI sandbox mock determinism, reports data contract regression, and staging environment shields.
+* Pass Rate: **100% (250/250 passing)**.
 
 To build the frontend for staging:
 

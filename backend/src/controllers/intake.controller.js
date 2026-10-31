@@ -1,5 +1,6 @@
 import { successResponse, errorResponse } from '../utils/apiResponse.js';
 import { firebaseRtdbAdapter } from '../integrations/firebase/firebaseRtdbAdapter.js';
+import { clinicalService } from '../services/clinical.service.js';
 import { auditService } from '../services/audit.service.js';
 
 /**
@@ -10,11 +11,34 @@ export async function getIntake(req, res, next) {
     const userRole = req.user.role;
     const targetPatientId = req.params.patientId || req.user.uid;
 
-    if (userRole === 'patient' && targetPatientId !== req.user.uid) {
-      return errorResponse(res, 'Access denied. You can only view your own intake.', 403, 'FORBIDDEN');
+    if (userRole === 'admin') {
+      return errorResponse(
+        res,
+        'Administrative accounts are barred from accessing direct patient clinical intake records.',
+        403,
+        'ADMIN_CLINICAL_ACCESS_PROHIBITED'
+      );
+    }
+
+    if (userRole === 'patient') {
+      if (targetPatientId !== req.user.uid) {
+        return errorResponse(res, 'Access denied. You can only view your own intake.', 403, 'FORBIDDEN');
+      }
+    } else if (userRole === 'psychologist') {
+      await clinicalService.assertTherapeuticRelationship(req.user.uid, targetPatientId);
+    } else {
+      return errorResponse(res, 'Access denied.', 403, 'FORBIDDEN');
     }
 
     const intakeRecord = await firebaseRtdbAdapter.get(`patientIntake/${targetPatientId}`);
+
+    await auditService.record({
+      action: 'CLINICAL_INTAKE_ACCESSED',
+      userId: req.user.uid,
+      actorRole: userRole,
+      targetResource: `patientIntake/${targetPatientId}`,
+      details: { patientId: targetPatientId },
+    });
 
     return successResponse(res, {
       patientId: targetPatientId,

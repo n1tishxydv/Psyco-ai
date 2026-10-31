@@ -7,6 +7,8 @@ import { AlertBanner } from '../../components/common/AlertBanner';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { InitialsAvatar } from '../../components/common/InitialsAvatar';
 import { Textarea } from '../../components/common/Textarea';
+import { StatusBadge } from '../../components/common/StatusBadge';
+import { AppointmentCardSkeleton } from '../../components/common/LoadingSkeleton';
 import { appointmentService } from '../../services/appointmentService';
 import { availabilityService } from '../../services/availabilityService';
 import { useAuth } from '../../context/AuthContext';
@@ -35,6 +37,7 @@ export function PatientAppointmentsPage() {
   const [successMsg, setSuccessMsg] = useState(null);
 
   const [filterTab, setFilterTab] = useState('upcoming'); // 'upcoming' | 'pending' | 'past' | 'cancelled'
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Cancellation Modal State
   const [cancellingApt, setCancellingApt] = useState(null);
@@ -154,17 +157,24 @@ export function PatientAppointmentsPage() {
   const now = new Date().toISOString();
 
   const filteredAppointments = appointments.filter((apt) => {
+    let matchesTab = true;
     if (filterTab === 'upcoming') {
-      return (apt.status === 'confirmed' || apt.status === 'reschedule_requested') && apt.startTime >= now;
+      matchesTab = (apt.status === 'confirmed' || apt.status === 'reschedule_requested') && apt.startTime >= now;
+    } else if (filterTab === 'pending') {
+      matchesTab = apt.status === 'pending' || apt.status === 'cancellation_requested';
+    } else if (filterTab === 'past') {
+      matchesTab = apt.status === 'completed' || (apt.status === 'confirmed' && apt.startTime < now);
+    } else if (filterTab === 'cancelled') {
+      matchesTab = apt.status === 'cancelled' || apt.status === 'rejected';
     }
-    if (filterTab === 'pending') {
-      return apt.status === 'pending' || apt.status === 'cancellation_requested';
-    }
-    if (filterTab === 'past') {
-      return apt.status === 'completed' || (apt.status === 'confirmed' && apt.startTime < now);
-    }
-    if (filterTab === 'cancelled') {
-      return apt.status === 'cancelled' || apt.status === 'rejected';
+
+    if (!matchesTab) return false;
+
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      const nameMatch = (apt.psychologistName || '').toLowerCase().includes(q);
+      const idMatch = (apt.id || '').toLowerCase().includes(q);
+      return nameMatch || idMatch;
     }
     return true;
   });
@@ -198,66 +208,83 @@ export function PatientAppointmentsPage() {
       {errorMsg && <AlertBanner type="error" title="Notice" message={errorMsg} />}
       {successMsg && <AlertBanner type="success" title="Success" message={successMsg} />}
 
-      {/* Tabs */}
-      <div className="flex p-1 bg-slate-900 border border-slate-800 rounded-xl max-w-lg">
-        <button
-          type="button"
-          onClick={() => setFilterTab('upcoming')}
-          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
-            filterTab === 'upcoming'
-              ? 'bg-slate-800 text-teal-300 shadow-sm'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Upcoming Confirmed
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilterTab('pending')}
-          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
-            filterTab === 'pending'
-              ? 'bg-slate-800 text-teal-300 shadow-sm'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Pending Requests
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilterTab('past')}
-          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
-            filterTab === 'past'
-              ? 'bg-slate-800 text-teal-300 shadow-sm'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Past Sessions
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilterTab('cancelled')}
-          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
-            filterTab === 'cancelled'
-              ? 'bg-slate-800 text-red-300 shadow-sm'
-              : 'text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          Cancelled / Declined
-        </button>
+      {/* Tabs & Search Filter Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex p-1 bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setFilterTab('upcoming')}
+            className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+              filterTab === 'upcoming'
+                ? 'bg-slate-800 text-teal-300 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Upcoming Confirmed
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterTab('pending')}
+            className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+              filterTab === 'pending'
+                ? 'bg-slate-800 text-teal-300 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Pending Requests
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterTab('past')}
+            className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+              filterTab === 'past'
+                ? 'bg-slate-800 text-teal-300 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Past Sessions
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilterTab('cancelled')}
+            className={`px-3 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+              filterTab === 'cancelled'
+                ? 'bg-slate-800 text-red-300 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Cancelled / Declined
+          </button>
+        </div>
+
+        <div className="relative w-full sm:w-64">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Search by clinician..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-400"
+          />
+        </div>
       </div>
 
       {/* Appointments List */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center p-16 min-h-[40vh]">
-          <LoadingSpinner size="lg" className="text-teal-400 mb-3" />
-          <p className="text-sm text-slate-400">Loading your appointments...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <AppointmentCardSkeleton />
+          <AppointmentCardSkeleton />
+          <AppointmentCardSkeleton />
+          <AppointmentCardSkeleton />
         </div>
       ) : filteredAppointments.length === 0 ? (
         <div className="p-12 text-center rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
           <CalendarIcon className="w-10 h-10 text-slate-600 mx-auto" />
-          <h3 className="text-lg font-semibold text-slate-200">No {filterTab} appointments</h3>
+          <h3 className="text-lg font-semibold text-slate-200">No {filterTab} appointments found</h3>
           <p className="text-xs text-slate-400 max-w-md mx-auto">
-            You currently have no consultations listed in this tab. Schedule a consultation with any of our verified practitioners.
+            {searchTerm
+              ? `No appointments matching "${searchTerm}" in this tab.`
+              : 'You currently have no consultations listed in this tab. Schedule a consultation with any of our verified practitioners.'}
           </p>
           <Link to="/find-psychologist" className="inline-block mt-2">
             <Button variant="secondary" size="sm">
@@ -293,21 +320,7 @@ export function PatientAppointmentsPage() {
                       </div>
                     </div>
 
-                    <Badge
-                      variant={
-                        apt.status === 'confirmed'
-                          ? 'green'
-                          : apt.status === 'pending'
-                          ? 'amber'
-                          : apt.status === 'cancelled'
-                          ? 'neutral'
-                          : 'teal'
-                      }
-                      size="sm"
-                      className="capitalize"
-                    >
-                      {apt.status.replace('_', ' ')}
-                    </Badge>
+                    <StatusBadge status={apt.status} size="sm" />
                   </div>
 
                   {/* Alternative Slot Proposal Notice */}

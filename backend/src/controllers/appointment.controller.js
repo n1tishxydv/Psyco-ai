@@ -31,31 +31,33 @@ export async function createAppointment(req, res, next) {
     }
     const user = req.user;
 
-    // Verify psychologist existence & active status
+    // Verify psychologist existence & active approved status
     let psychRecord = await firebaseRtdbAdapter.get(`psychologists/${psychologistId}`);
     if (!psychRecord) {
-      const userRec = await firebaseRtdbAdapter.get(`users/${psychologistId}`);
-      if (userRec && userRec.role === 'psychologist') {
-        psychRecord = {
-          uid: psychologistId,
-          fullName: userRec.fullName || 'Clinical Psychologist',
-          licenseNumber: 'RCI-CLINICAL-PRACTICE',
-          bio: 'Specialized clinical psychologist focused on evidence-based mental healthcare.',
-          specializations: ['Cognitive Behavioral Therapy (CBT)', 'Anxiety & Depression'],
-          qualifications: ['M.Phil Clinical Psychology', 'Licensed Clinical Practitioner'],
-          languages: ['English', 'Hindi'],
-          offeredModes: 'both',
-          defaultMode: 'in_person',
-          approvalStatus: 'approved',
-          timezone: 'Asia/Kolkata',
-          createdAt: userRec.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        await firebaseRtdbAdapter.set(`psychologists/${psychologistId}`, psychRecord);
-      }
-    }
-    if (!psychRecord) {
       return errorResponse(res, 'Psychologist not found or inactive.', 404, 'PSYCHOLOGIST_NOT_FOUND');
+    }
+
+    const isApproved = psychRecord.approvalStatus === 'approved' || (psychRecord.verified === true && psychRecord.approvalStatus !== 'rejected');
+    if (!isApproved) {
+      return errorResponse(
+        res,
+        'Psychologist is not available for appointments (pending credentials verification or inactive).',
+        403,
+        'PSYCHOLOGIST_NOT_VERIFIED'
+      );
+    }
+
+    if (user.role === 'psychologist') {
+      const selfPsych = await firebaseRtdbAdapter.get(`psychologists/${user.uid}`);
+      const isSelfApproved = selfPsych?.approvalStatus === 'approved' || (selfPsych?.verified === true && selfPsych?.approvalStatus !== 'rejected');
+      if (!isSelfApproved) {
+        return errorResponse(
+          res,
+          'Clinician account is not approved for scheduling appointments.',
+          403,
+          'PSYCHOLOGIST_NOT_VERIFIED'
+        );
+      }
     }
 
     // Verify mode compatibility
@@ -249,6 +251,12 @@ export async function acceptAppointment(req, res, next) {
 
     if (appointment.psychologistId !== user.uid) {
       return errorResponse(res, 'You can only accept appointments assigned to your practice.', 403, 'FORBIDDEN');
+    }
+
+    const selfPsych = await firebaseRtdbAdapter.get(`psychologists/${user.uid}`);
+    const isSelfApproved = selfPsych?.approvalStatus === 'approved' || (selfPsych?.verified === true && selfPsych?.approvalStatus !== 'rejected');
+    if (!isSelfApproved) {
+      return errorResponse(res, 'Clinician account is not approved to accept appointments.', 403, 'PSYCHOLOGIST_NOT_VERIFIED');
     }
 
     if (appointment.status === 'confirmed') {

@@ -6,6 +6,7 @@ import { Button } from '../../../components/common/Button';
 import { Badge } from '../../../components/common/Badge';
 import { AlertBanner } from '../../../components/common/AlertBanner';
 import { publicService } from '../../../services/publicService';
+import { isBackendConfigured } from '../../../services/apiClient';
 import { Mail, Clock, Send, ShieldAlert, AlertTriangle } from 'lucide-react';
 
 export function ContactSection() {
@@ -46,6 +47,11 @@ export function ContactSection() {
     }
     if (formData.message.trim().length < 10) {
       setErrorMsg('Message must be at least 10 characters.');
+      return;
+    }
+
+    if (!isBackendConfigured()) {
+      setErrorMsg('Contact inquiries are temporarily unavailable while the backend service is being updated. Please try again soon.');
       return;
     }
 

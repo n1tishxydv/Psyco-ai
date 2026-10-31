@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent } from '../../components/cards/Card';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
@@ -184,15 +185,16 @@ export function PatientProfilePage() {
                 </div>
               </div>
 
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => window.location.href = '/patient/intake'}
-                className="flex items-center gap-2 flex-shrink-0"
-              >
-                {intakeStatus === 'submitted' ? 'View Intake' : 'Open Intake Form'}
-                <ArrowRight className="w-4 h-4" />
-              </Button>
+              <Link to="/patient/intake" className="flex-shrink-0">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <span>{intakeStatus === 'submitted' ? 'View Intake' : 'Open Intake Form'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 

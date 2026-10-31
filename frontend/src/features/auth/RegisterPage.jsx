@@ -10,6 +10,7 @@ import { AlertBanner } from '../../components/common/AlertBanner';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { useAuth } from '../../context/AuthContext';
 import { profileService } from '../../services/profileService';
+import { isBackendConfigured } from '../../services/apiClient';
 import { UserPlus, User, Stethoscope, Mail, Lock, ShieldCheck, ArrowRight } from 'lucide-react';
 
 export function RegisterPage() {
@@ -54,18 +55,22 @@ export function RegisterPage() {
       // 1. Create Firebase Auth account
       await registerWithEmail(patientData.email, patientData.password);
 
-      // 2. Commit authoritative patient profile to RTDB via backend
-      await profileService.onboardPatient({
-        fullName: patientData.fullName,
-        gender: patientData.gender,
-        age: parseInt(patientData.age, 10),
-        phone: patientData.phone,
-        preferredName: patientData.preferredName || patientData.fullName,
-      });
+      // 2. Commit authoritative patient profile to RTDB via backend if configured
+      if (isBackendConfigured()) {
+        await profileService.onboardPatient({
+          fullName: patientData.fullName,
+          gender: patientData.gender,
+          age: parseInt(patientData.age, 10),
+          phone: patientData.phone,
+          preferredName: patientData.preferredName || patientData.fullName,
+        });
 
-      await refreshProfile();
-      // Route patient directly to clinical intake stepper
-      navigate('/patient/intake', { replace: true });
+        await refreshProfile();
+        // Route patient directly to clinical intake stepper
+        navigate('/patient/intake', { replace: true });
+      } else {
+        navigate('/onboarding', { replace: true });
+      }
     } catch (err) {
       console.error('Patient registration error:', err);
       let msg = err.message || 'Registration failed. Please try again.';
@@ -89,30 +94,34 @@ export function RegisterPage() {
       // 1. Create Firebase Auth account
       await registerWithEmail(psychologistData.email, psychologistData.password);
 
-      // 2. Commit authoritative psychologist profile to RTDB via backend
-      const specs = psychologistData.specializations
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
+      // 2. Commit authoritative psychologist profile to RTDB via backend if configured
+      if (isBackendConfigured()) {
+        const specs = psychologistData.specializations
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
 
-      const langs = psychologistData.languages
-        .split(',')
-        .map((l) => l.trim())
-        .filter(Boolean);
+        const langs = psychologistData.languages
+          .split(',')
+          .map((l) => l.trim())
+          .filter(Boolean);
 
-      await profileService.onboardPsychologist({
-        fullName: psychologistData.fullName,
-        licenseNumber: psychologistData.licenseNumber,
-        bio: psychologistData.bio,
-        specializations: specs.length > 0 ? specs : ['General Counseling'],
-        languages: langs.length > 0 ? langs : ['English'],
-        offeredModes: psychologistData.offeredModes,
-        defaultMode: psychologistData.defaultMode,
-      });
+        await profileService.onboardPsychologist({
+          fullName: psychologistData.fullName,
+          licenseNumber: psychologistData.licenseNumber,
+          bio: psychologistData.bio,
+          specializations: specs.length > 0 ? specs : ['General Counseling'],
+          languages: langs.length > 0 ? langs : ['English'],
+          offeredModes: psychologistData.offeredModes,
+          defaultMode: psychologistData.defaultMode,
+        });
 
-      await refreshProfile();
-      // Route psychologist directly to professional profile
-      navigate('/psychologist/profile', { replace: true });
+        await refreshProfile();
+        // Route psychologist directly to professional profile
+        navigate('/psychologist/profile', { replace: true });
+      } else {
+        navigate('/onboarding', { replace: true });
+      }
     } catch (err) {
       console.error('Psychologist registration error:', err);
       let msg = err.message || 'Registration failed. Please try again.';

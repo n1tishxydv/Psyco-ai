@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { authenticateToken } from '../../middleware/auth.js';
-import { requireRole, blockAdminFromClinicalRecords, ROLES } from '../../middleware/authorization.js';
+import {
+  requireRole,
+  blockAdminFromClinicalRecords,
+  requireVerifiedPsychologist,
+  ROLES,
+} from '../../middleware/authorization.js';
 import { validateBody } from '../../middleware/validate.js';
 import {
   getAssignedPatients,
@@ -58,10 +63,11 @@ router.patch(
 
 // ==========================================
 // PSYCHOLOGIST CLINICAL WORKSPACE ROUTES
-// (Strictly blocked from administrators)
+// (Strictly blocked from administrators & unverified clinicians)
 // ==========================================
 router.use(blockAdminFromClinicalRecords());
 router.use(requireRole(ROLES.PSYCHOLOGIST));
+router.use(requireVerifiedPsychologist());
 
 // Patients & Chart
 router.get('/patients', getAssignedPatients);

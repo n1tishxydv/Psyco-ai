@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { adminService } from '../../services/adminService';
+import { isBackendConfigured } from '../../services/apiClient';
 import { Card, CardHeader, CardContent } from '../../components/cards/Card';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
@@ -54,6 +55,12 @@ export function AdminDashboard() {
   const [actionInProgress, setActionInProgress] = useState(false);
 
   const fetchDashboardData = async () => {
+    if (!isBackendConfigured()) {
+      setLoading(false);
+      setError('Administrative metrics are unavailable because the backend service is currently not connected.');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);

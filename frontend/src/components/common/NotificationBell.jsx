@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationService } from '../../services/notificationService';
+import { isBackendConfigured } from '../../services/apiClient';
 import { useAuth } from '../../context/AuthContext';
 import {
   Bell,
@@ -22,7 +23,7 @@ export function NotificationBell() {
   const dropdownRef = useRef(null);
 
   const fetchNotifications = async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !isBackendConfigured()) return;
     try {
       const res = await notificationService.getNotifications();
       if (res?.data) {
@@ -35,7 +36,7 @@ export function NotificationBell() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !isBackendConfigured()) return;
     fetchNotifications();
 
     const interval = setInterval(fetchNotifications, 25000); // 25s refresh
@@ -124,43 +125,66 @@ export function NotificationBell() {
           </div>
 
           <div className="max-h-80 overflow-y-auto divide-y divide-slate-800/60">
-            {notifications.length === 0 ? (
+            {!isBackendConfigured() ? (
+              <div className="p-6 text-center text-xs text-slate-500 space-y-1">
+                <Bell className="w-6 h-6 mx-auto opacity-30 mb-2" />
+                <p className="font-medium text-slate-400">Notifications Offline</p>
+                <p className="text-[11px]">Backend service is not connected in this deployment.</p>
+              </div>
+            ) : notifications.length === 0 ? (
               <div className="p-6 text-center text-xs text-slate-500 space-y-1">
                 <Bell className="w-6 h-6 mx-auto opacity-30 mb-2" />
                 <p className="font-medium text-slate-400">No notifications</p>
                 <p className="text-[11px]">Appointment and schedule updates will appear here.</p>
               </div>
             ) : (
-              notifications.map((notif) => (
-                <div
-                  key={notif.id}
-                  onClick={() => handleItemClick(notif)}
-                  className={`p-3.5 hover:bg-slate-800/70 cursor-pointer transition-colors flex items-start gap-3 ${
-                    !notif.read ? 'bg-teal-950/20' : ''
-                  }`}
-                >
-                  <div className="p-2 rounded-xl bg-teal-500/10 text-teal-400 mt-0.5 flex-shrink-0">
-                    <Calendar className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="flex-1 min-w-0 space-y-0.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-slate-200 truncate">
-                        {notif.title}
-                      </span>
-                      {!notif.read && (
-                        <span className="w-2 h-2 rounded-full bg-teal-400 flex-shrink-0" />
-                      )}
+              notifications.map((notif) => {
+                const titleLower = (notif.title || '').toLowerCase();
+                let iconClass = 'bg-softTeal/10 text-softTeal';
+                let Icon = Calendar;
+
+                if (titleLower.includes('confirmed') || titleLower.includes('accepted')) {
+                  iconClass = 'bg-calmGreen/15 text-calmGreen';
+                  Icon = CheckCheck;
+                } else if (titleLower.includes('cancelled') || titleLower.includes('rejected')) {
+                  iconClass = 'bg-mutedCoral/15 text-mutedCoral';
+                  Icon = AlertCircle;
+                } else if (titleLower.includes('rescheduled') || titleLower.includes('proposal')) {
+                  iconClass = 'bg-mutedAmber/15 text-mutedAmber';
+                  Icon = Clock;
+                }
+
+                return (
+                  <div
+                    key={notif.id}
+                    onClick={() => handleItemClick(notif)}
+                    className={`p-3.5 hover:bg-slate-800/70 cursor-pointer transition-colors flex items-start gap-3 ${
+                      !notif.read ? 'bg-softTeal/5' : ''
+                    }`}
+                  >
+                    <div className={`p-2 rounded-xl ${iconClass} mt-0.5 flex-shrink-0`}>
+                      <Icon className="w-4 h-4" />
                     </div>
-                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                      {notif.message}
-                    </p>
-                    <div className="text-[10px] text-slate-500 flex items-center gap-1 pt-0.5">
-                      <Clock className="w-3 h-3" />
-                      <span>{new Date(notif.createdAt).toLocaleDateString()} {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <div className="flex-1 min-w-0 space-y-0.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-200 truncate">
+                          {notif.title}
+                        </span>
+                        {!notif.read && (
+                          <span className="w-2 h-2 rounded-full bg-softTeal flex-shrink-0" />
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                        {notif.message}
+                      </p>
+                      <div className="text-[10px] text-slate-500 flex items-center gap-1 pt-0.5">
+                        <Clock className="w-3 h-3" />
+                        <span>{new Date(notif.createdAt).toLocaleDateString()} {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

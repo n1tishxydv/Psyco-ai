@@ -75,8 +75,20 @@ export const clinicalService = {
 
   /**
    * Verifies therapeutic relationship between psychologist and patient
+   * Enforces verified clinician status and active scheduling or care relationship
    */
   assertTherapeuticRelationship: async (psychologistId, patientId) => {
+    // 1. Verify psychologist profile existence and approved verification status
+    const psych = await firebaseRtdbAdapter.get(`psychologists/${psychologistId}`);
+    const isApproved = psych?.approvalStatus === 'approved' || (psych?.verified === true && psych?.approvalStatus !== 'rejected');
+    if (!isApproved) {
+      const err = new Error('Access denied. Clinician credentials are pending verification or rejected.');
+      err.status = 403;
+      err.code = 'PSYCHOLOGIST_NOT_VERIFIED';
+      throw err;
+    }
+
+    // 2. Verify active clinical or scheduling relationship
     const allAppointments = (await firebaseRtdbAdapter.get('appointments')) || {};
     const hasApt = Object.values(allAppointments).some(
       (a) => a.psychologistId === psychologistId && a.patientId === patientId

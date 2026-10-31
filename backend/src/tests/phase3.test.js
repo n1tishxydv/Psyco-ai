@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import request from 'supertest';
 import app from '../app.js';
+import { firebaseRtdbAdapter } from '../integrations/firebase/firebaseRtdbAdapter.js';
 
 test('Phase 3: Appointment Booking, Availability, Calendar Management & Concurrency', async (t) => {
   const patientToken = 'Bearer test-token-patient-patient_p3_01';
@@ -35,6 +36,10 @@ test('Phase 3: Appointment Booking, Availability, Calendar Management & Concurre
         bio: 'Clinical Psychologist specialized in cognitive behavioral frameworks.',
       });
     assert.equal(psychRes.status, 201);
+
+    // Administrative verification of clinician fixture
+    await firebaseRtdbAdapter.set(`psychologists/${psychUid}/approvalStatus`, 'approved');
+    await firebaseRtdbAdapter.set(`users/${psychUid}/accountStatus`, 'active');
 
     // Onboard patient 1
     const p1Res = await request(app)

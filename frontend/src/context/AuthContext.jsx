@@ -11,6 +11,7 @@ import {
   onAuthStateChanged,
 } from '../services/firebase.js';
 import { profileService } from '../services/profileService.js';
+import { isBackendConfigured } from '../services/apiClient.js';
 
 const AuthContext = createContext(null);
 
@@ -24,6 +25,10 @@ export function AuthProvider({ children }) {
   const syncBackendProfile = useCallback(async (token) => {
     if (token) {
       localStorage.setItem('psyco_token', token);
+      // Skip backend sync if backend is not configured in this deployed build
+      if (!isBackendConfigured()) {
+        return null;
+      }
       try {
         const response = await profileService.getMe();
         if (response?.data) {
@@ -131,16 +136,27 @@ export function AuthProvider({ children }) {
   const isAuthenticated = Boolean(firebaseUser || userProfile?.uid);
   const isOnboarded = userProfile?.onboardingStatus === 'completed';
 
+  // Safe fallback user object when Firebase Auth succeeds before backend profile is synced
+  const effectiveUser = userProfile || (firebaseUser ? {
+    uid: firebaseUser.uid,
+    email: firebaseUser.email,
+    fullName: firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : 'User'),
+    role: null,
+    onboardingStatus: 'pending',
+    isBackendConnected: false,
+  } : null);
+
   return (
     <AuthContext.Provider
       value={{
         firebaseUser,
-        user: userProfile,
+        user: effectiveUser,
         role,
         isAuthenticated,
         isOnboarded,
         isLoading,
         isFirebaseConfigured,
+        isBackendConfigured: isBackendConfigured(),
         authError,
         setAuthError,
         loginWithEmail,

@@ -3,13 +3,13 @@
     "users": {
       "$uid": {
         ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-        ".write": "auth != null && (auth.uid === $uid && (!data.exists() || !newData.child('role').exists() || newData.child('role').val() === data.child('role').val()))",
+        ".write": "auth != null && auth.uid === $uid && (!data.exists() ? (!newData.child('role').exists() || newData.child('role').val() === 'patient') : (!newData.child('role').exists() || newData.child('role').val() === data.child('role').val())) && (!newData.child('accountStatus').exists() || !data.exists() || newData.child('accountStatus').val() === data.child('accountStatus').val())",
         ".validate": "newData.hasChildren(['uid', 'email'])"
       }
     },
     "patients": {
       "$uid": {
-        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'psychologist')",
+        ".read": "auth != null && (auth.uid === $uid || (root.child('users').child(auth.uid).child('role').val() === 'psychologist' && data.child('assignedPsychologistIds').child(auth.uid).val() === true))",
         ".write": "auth != null && auth.uid === $uid",
         ".validate": "newData.hasChildren(['fullName', 'gender', 'age'])"
       }
@@ -17,12 +17,12 @@
     "psychologists": {
       "$uid": {
         ".read": "true",
-        ".write": "auth != null && auth.uid === $uid && (!newData.child('approvalStatus').exists() || newData.child('approvalStatus').val() === data.child('approvalStatus').val())"
+        ".write": "auth != null && auth.uid === $uid && (!data.exists() ? (!newData.child('approvalStatus').exists() || newData.child('approvalStatus').val() === 'pending') : (!newData.child('approvalStatus').exists() || newData.child('approvalStatus').val() === data.child('approvalStatus').val()))"
       }
     },
     "patientIntake": {
       "$uid": {
-        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'psychologist')",
+        ".read": "auth != null && (auth.uid === $uid || (root.child('users').child(auth.uid).child('role').val() === 'psychologist' && root.child('patients').child($uid).child('assignedPsychologistIds').child(auth.uid).val() === true))",
         ".write": "auth != null && auth.uid === $uid"
       }
     },
@@ -39,10 +39,10 @@
       }
     },
     "appointments": {
-      ".read": "auth != null",
+      ".indexOn": ["patientId", "psychologistId", "startTime", "status"],
       "$appointmentId": {
         ".read": "auth != null && (data.child('patientId').val() === auth.uid || data.child('psychologistId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-        ".write": "auth != null && (data.child('patientId').val() === auth.uid || data.child('psychologistId').val() === auth.uid || !data.exists())"
+        ".write": "auth != null && (!data.exists() ? (newData.child('patientId').val() === auth.uid || newData.child('psychologistId').val() === auth.uid) : (data.child('patientId').val() === auth.uid || data.child('psychologistId').val() === auth.uid))"
       }
     },
     "notifications": {
@@ -55,6 +55,10 @@
       ".read": false,
       ".write": false
     },
+    "googleOAuthStates": {
+      ".read": false,
+      ".write": false
+    },
     "userPreferences": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
@@ -64,19 +68,19 @@
     "sessionRecords": {
       "$sessionId": {
         ".read": "auth != null && (data.child('psychologistId').val() === auth.uid || data.child('patientId').val() === auth.uid)",
-        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist'"
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist' && (!data.exists() ? newData.child('psychologistId').val() === auth.uid : data.child('psychologistId').val() === auth.uid)"
       }
     },
     "sessionNotes": {
       "$noteId": {
         ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() != 'admin' && (data.child('psychologistId').val() === auth.uid || (data.child('patientId').val() === auth.uid && data.child('sharedWithPatient').val() === true))",
-        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist'"
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist' && (!data.exists() ? newData.child('psychologistId').val() === auth.uid : data.child('psychologistId').val() === auth.uid)"
       }
     },
     "treatmentPlans": {
       "$planId": {
         ".read": "auth != null && (data.child('psychologistId').val() === auth.uid || (data.child('patientId').val() === auth.uid && data.child('sharedWithPatient').val() === true))",
-        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist'"
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist' && (!data.exists() ? newData.child('psychologistId').val() === auth.uid : data.child('psychologistId').val() === auth.uid)"
       }
     },
     "followUpTasks": {
@@ -100,49 +104,49 @@
     "sessionTranscripts": {
       "$transcriptId": {
         ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() != 'admin' && (data.child('psychologistId').val() === auth.uid || (data.child('patientId').val() === auth.uid && data.child('sharedWithPatient').val() === true))",
-        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist'"
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist' && (!data.exists() ? newData.child('psychologistId').val() === auth.uid : data.child('psychologistId').val() === auth.uid)"
       }
     },
     "transcriptEntries": {
       "$transcriptId": {
         ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() != 'admin' && (root.child('sessionTranscripts').child($transcriptId).child('psychologistId').val() === auth.uid || (root.child('sessionTranscripts').child($transcriptId).child('patientId').val() === auth.uid && root.child('sessionTranscripts').child($transcriptId).child('sharedWithPatient').val() === true))",
-        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist'"
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist' && (!data.exists() ? root.child('sessionTranscripts').child($transcriptId).child('psychologistId').val() === auth.uid : root.child('sessionTranscripts').child($transcriptId).child('psychologistId').val() === auth.uid)"
       }
     },
     "transcriptVersions": {
       "$transcriptId": {
-        ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist'",
-        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist'"
+        ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist' && root.child('sessionTranscripts').child($transcriptId).child('psychologistId').val() === auth.uid",
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist' && root.child('sessionTranscripts').child($transcriptId).child('psychologistId').val() === auth.uid"
       }
     },
     "consentRecords": {
       "$consentId": {
         ".read": "auth != null && (data.child('psychologistId').val() === auth.uid || data.child('patientId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-        ".write": "auth != null"
+        ".write": "auth != null && (!data.exists() ? (newData.child('patientId').val() === auth.uid || newData.child('psychologistId').val() === auth.uid) : (data.child('patientId').val() === auth.uid || data.child('psychologistId').val() === auth.uid))"
       }
     },
     "aiJobs": {
       "$jobId": {
         ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() != 'admin' && data.child('psychologistId').val() === auth.uid",
-        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist'"
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist' && (!data.exists() ? newData.child('psychologistId').val() === auth.uid : data.child('psychologistId').val() === auth.uid)"
       }
     },
     "aiDrafts": {
       "$draftId": {
         ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() != 'admin' && data.child('psychologistId').val() === auth.uid",
-        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist'"
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'psychologist' && (!data.exists() ? newData.child('psychologistId').val() === auth.uid : data.child('psychologistId').val() === auth.uid)"
       }
     },
     "assessmentAssignments": {
       "$assignmentId": {
         ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() != 'admin' && (data.child('psychologistId').val() === auth.uid || data.child('patientId').val() === auth.uid)",
-        ".write": "auth != null"
+        ".write": "auth != null && (!data.exists() ? (root.child('users').child(auth.uid).child('role').val() === 'psychologist' && newData.child('psychologistId').val() === auth.uid) : (data.child('psychologistId').val() === auth.uid || (data.child('patientId').val() === auth.uid && newData.child('status').val() === 'completed')))"
       }
     },
     "assessmentResults": {
       "$resultId": {
         ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() != 'admin' && (data.child('psychologistId').val() === auth.uid || data.child('patientId').val() === auth.uid)",
-        ".write": "auth != null"
+        ".write": "auth != null && (!data.exists() ? (newData.child('patientId').val() === auth.uid || newData.child('psychologistId').val() === auth.uid) : (data.child('psychologistId').val() === auth.uid))"
       }
     },
     "riskReviewFlags": {

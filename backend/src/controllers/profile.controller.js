@@ -146,7 +146,8 @@ export async function onboardPsychologist(req, res, next) {
       email,
       fullName,
       role: 'psychologist',
-      accountStatus: 'active',
+      accountStatus: 'pending_verification',
+      approvalStatus: 'pending',
       onboardingStatus: 'completed',
       createdAt: existingUser?.createdAt || now,
       updatedAt: now,
@@ -163,7 +164,9 @@ export async function onboardPsychologist(req, res, next) {
       languages: languages || ['English'],
       offeredModes: offeredModes || 'both',
       defaultMode: defaultMode || 'in_person',
-      approvalStatus: 'approved', // Default approved for self-managed practices or test accounts; admin can override
+      approvalStatus: 'pending',
+      verified: false,
+      accountStatus: 'pending_verification',
       timezone: timezone || 'Asia/Kolkata',
       createdAt: now,
       updatedAt: now,
@@ -175,9 +178,11 @@ export async function onboardPsychologist(req, res, next) {
     ]);
 
     await auditService.record({
-      action: 'PSYCHOLOGIST_ONBOARDED',
+      action: 'PSYCHOLOGIST_APPLICATION_SUBMITTED',
       userId: uid,
-      details: { email, fullName, licenseNumber, offeredModes },
+      actorRole: 'psychologist',
+      targetResource: `psychologists/${uid}`,
+      details: { email, fullName, licenseNumber, offeredModes, approvalStatus: 'pending' },
     });
 
     return successResponse(

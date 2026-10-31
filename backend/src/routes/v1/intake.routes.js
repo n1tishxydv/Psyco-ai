@@ -7,7 +7,12 @@ import {
   updatePsychologistTemplate,
 } from '../../controllers/intake.controller.js';
 import { authenticateToken } from '../../middleware/auth.js';
-import { requireRole, ROLES } from '../../middleware/authorization.js';
+import {
+  requireRole,
+  blockAdminFromClinicalRecords,
+  requireVerifiedPsychologist,
+  ROLES,
+} from '../../middleware/authorization.js';
 import { validateRequest } from '../../validators/validateRequest.js';
 import { saveDraftIntakeSchema, submitIntakeSchema } from '../../validators/intake.validators.js';
 import { intakeTemplateSchema } from '../../validators/template.validators.js';
@@ -15,10 +20,17 @@ import { intakeTemplateSchema } from '../../validators/template.validators.js';
 const router = Router();
 
 // Patient intake endpoints
-router.get('/my-intake', authenticateToken, requireRole(ROLES.PATIENT), getIntake);
+router.get(
+  '/my-intake',
+  authenticateToken,
+  blockAdminFromClinicalRecords(),
+  requireRole(ROLES.PATIENT),
+  getIntake
+);
 router.post(
   '/draft',
   authenticateToken,
+  blockAdminFromClinicalRecords(),
   requireRole(ROLES.PATIENT),
   validateRequest(saveDraftIntakeSchema),
   saveDraftIntake
@@ -26,6 +38,7 @@ router.post(
 router.post(
   '/submit',
   authenticateToken,
+  blockAdminFromClinicalRecords(),
   requireRole(ROLES.PATIENT),
   validateRequest(submitIntakeSchema),
   submitIntake
@@ -35,7 +48,9 @@ router.post(
 router.get(
   '/patient/:patientId',
   authenticateToken,
+  blockAdminFromClinicalRecords(),
   requireRole(ROLES.PSYCHOLOGIST),
+  requireVerifiedPsychologist(),
   getIntake
 );
 

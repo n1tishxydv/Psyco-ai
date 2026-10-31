@@ -28,7 +28,7 @@ export async function getAuthUrl(req, res, next) {
       );
     }
 
-    const authUrl = googleCalendarAdapter.generateAuthUrl(req.user.uid);
+    const authUrl = await googleCalendarAdapter.generateAuthUrl(req.user.uid);
     return successResponse(res, { url: authUrl, authUrl });
   } catch (err) {
     next(err);

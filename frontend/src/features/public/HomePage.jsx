@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../../components/cards
 import { AlertBanner } from '../../components/common/AlertBanner';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { systemService } from '../../services/systemService';
+import { isBackendConfigured } from '../../services/apiClient';
 
 // Phase 1 Specialized Public Components
 import { HeroArtwork } from './components/HeroArtwork';
@@ -32,6 +33,12 @@ export function HomePage() {
 
   useEffect(() => {
     let mounted = true;
+
+    if (!isBackendConfigured()) {
+      setHealthLoading(false);
+      return;
+    }
+
     systemService
       .checkHealth()
       .then((res) => {
@@ -148,7 +155,13 @@ export function HomePage() {
             </p>
           </div>
           <Badge variant={healthData ? 'green' : 'amber'}>
-            {healthLoading ? 'Polling API...' : healthData ? 'Backend Connected' : 'Backend Offline'}
+            {healthLoading
+              ? 'Checking API...'
+              : healthData
+              ? 'Backend Connected'
+              : !isBackendConfigured()
+              ? 'Standalone Mode'
+              : 'Backend Offline'}
           </Badge>
         </div>
 
@@ -159,11 +172,21 @@ export function HomePage() {
               <p className="text-xs text-secondaryText">Querying backend process metrics...</p>
             </div>
           </Card>
+        ) : !isBackendConfigured() ? (
+          <Card className="p-6 border-slate-800 bg-slate-900/40 text-center space-y-2">
+            <div className="flex items-center justify-center gap-2 text-slate-300 font-medium text-sm">
+              <Server className="w-4 h-4 text-softTeal" />
+              Backend Service Integration Pending
+            </div>
+            <p className="text-xs text-secondaryText max-w-xl mx-auto">
+              This frontend deployment is operating in standalone mode. Backend Express API endpoints and process telemetry will become visible once the backend service is connected.
+            </p>
+          </Card>
         ) : healthError ? (
           <AlertBanner
-            type="error"
-            title="Backend Communication Error"
-            message={`${healthError} (Ensure the Express server is running on port 5000 via 'npm run dev:backend')`}
+            type="warning"
+            title="Backend Communication Notice"
+            message={healthError}
           />
         ) : healthData ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

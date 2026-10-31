@@ -73,31 +73,9 @@ router.get('/', async (req, res, next) => {
 router.get('/:psychologistId', async (req, res, next) => {
   try {
     const { psychologistId } = req.params;
-    let psych = await firebaseRtdbAdapter.get(`psychologists/${psychologistId}`);
+    const psych = await firebaseRtdbAdapter.get(`psychologists/${psychologistId}`);
 
-    if (!psych) {
-      const userRec = await firebaseRtdbAdapter.get(`users/${psychologistId}`);
-      if (userRec && userRec.role === 'psychologist') {
-        psych = {
-          uid: psychologistId,
-          fullName: userRec.fullName || 'Clinical Psychologist',
-          licenseNumber: 'RCI-CLINICAL-PRACTICE',
-          bio: 'Specialized clinical psychologist focused on evidence-based mental healthcare.',
-          specializations: ['Cognitive Behavioral Therapy (CBT)', 'Anxiety & Depression'],
-          qualifications: ['M.Phil Clinical Psychology', 'Licensed Clinical Practitioner'],
-          languages: ['English', 'Hindi'],
-          offeredModes: 'both',
-          defaultMode: 'in_person',
-          approvalStatus: 'approved',
-          timezone: 'Asia/Kolkata',
-          createdAt: userRec.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        await firebaseRtdbAdapter.set(`psychologists/${psychologistId}`, psych);
-      }
-    }
-
-    if (!psych || (psych.approvalStatus && psych.approvalStatus !== 'approved')) {
+    if (!psych || psych.approvalStatus !== 'approved') {
       return errorResponse(res, 'Psychologist not found or not approved.', 404, 'NOT_FOUND');
     }
 

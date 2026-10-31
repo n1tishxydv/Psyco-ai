@@ -117,6 +117,7 @@ export const adminService = {
     user.accountStatus = newStatus;
     user.status = newStatus;
     user.verified = isApproved;
+    user.approvalStatus = isApproved ? 'approved' : 'rejected';
     user.updatedAt = now;
     await firebaseRtdbAdapter.set(`users/${psychologistUid}`, user);
 

@@ -87,6 +87,12 @@ export async function authenticateToken(req, res, next) {
     }
 
     const finalRole = userRecord?.role || decodedToken.role || 'patient';
+    let approvalStatus = null;
+    if (finalRole === 'psychologist') {
+      const psychRecord = await firebaseRtdbAdapter.get(`psychologists/${uid}`);
+      approvalStatus = psychRecord?.approvalStatus || (psychRecord?.verified ? 'approved' : (userRecord?.approvalStatus || 'pending'));
+    }
+
     req.user = {
       uid,
       email: email || userRecord?.email || null,
@@ -94,6 +100,7 @@ export async function authenticateToken(req, res, next) {
       accountStatus: userRecord?.accountStatus || 'active',
       onboardingStatus: userRecord?.onboardingStatus || 'incomplete',
       fullName: userRecord?.fullName || null,
+      approvalStatus,
     };
 
     next();

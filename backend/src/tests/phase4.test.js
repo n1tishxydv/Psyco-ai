@@ -39,6 +39,8 @@ test('Phase 4: Clinical Workspace, Documentation, Treatment Plans, Reports & Adm
         bio: 'Clinical Psychologist specialized in clinical trauma interventions.',
       });
     assert.equal(psychRes.status, 201);
+    await firebaseRtdbAdapter.set(`psychologists/${psychUid}/approvalStatus`, 'approved');
+    await firebaseRtdbAdapter.set(`users/${psychUid}/accountStatus`, 'active');
 
     // 2. Onboard unassigned psychologist (competitor / outsider)
     const unassignedRes = await request(app)
@@ -53,6 +55,8 @@ test('Phase 4: Clinical Workspace, Documentation, Treatment Plans, Reports & Adm
         bio: 'Consulting specialist.',
       });
     assert.equal(unassignedRes.status, 201);
+    await firebaseRtdbAdapter.set(`psychologists/${unassignedPsychUid}/approvalStatus`, 'approved');
+    await firebaseRtdbAdapter.set(`users/${unassignedPsychUid}/accountStatus`, 'active');
 
     // 3. Onboard patient
     const patientRes = await request(app)

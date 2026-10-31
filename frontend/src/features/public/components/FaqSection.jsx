@@ -7,11 +7,51 @@ import { Badge } from '../../../components/common/Badge';
 import { AlertBanner } from '../../../components/common/AlertBanner';
 import { LoadingSpinner } from '../../../components/common/LoadingSpinner';
 import { publicService } from '../../../services/publicService';
+import { isBackendConfigured } from '../../../services/apiClient';
 import { ChevronDown, ChevronUp, HelpCircle, Send, CheckCircle2 } from 'lucide-react';
 
+const FALLBACK_FAQS = [
+  {
+    id: 'faq_01',
+    category: 'Product Overview',
+    question: 'What is Psyco AI?',
+    answer: 'Psyco AI is a dedicated mental health practice-management platform designed for clinical psychologists, therapists, and their patients. It centralizes appointment scheduling, patient intake, structured clinical notes, and treatment plans in a calm, accessible workspace.',
+  },
+  {
+    id: 'faq_02',
+    category: 'Target Audience',
+    question: 'Who is Psyco AI designed for?',
+    answer: 'The platform serves three distinct roles: (1) Patients seeking streamlined provider discovery and appointment management, (2) Psychologists running independent practices or clinics, and (3) Practice administrators managing provider verification and system health.',
+  },
+  {
+    id: 'faq_03',
+    category: 'Session Modes',
+    question: 'Which consultation modes are supported?',
+    answer: 'In-person consultation is the primary and default session mode, tailored to traditional clinical psychology practices. Online consultations via Google Meet video links are seamlessly supported when chosen by the psychologist or patient.',
+  },
+  {
+    id: 'faq_04',
+    category: 'Privacy & Storage',
+    question: 'Does Psyco AI store permanent audio recordings of therapy sessions?',
+    answer: 'No. Psyco AI enforces a strict zero-binary-media policy. Session audio for future transcription features will be processed transiently in memory to extract text, and the audio buffer is wiped immediately. No audio files or raw voice recordings are stored.',
+  },
+  {
+    id: 'faq_05',
+    category: 'Clinical AI Ethics',
+    question: 'Does AI replace the psychologist or diagnose patients autonomously?',
+    answer: 'Never. All AI capabilities operate under a strict Human-in-the-Loop paradigm. Gemini produces draft notes that must be reviewed, edited, and digitally signed by the licensed psychologist before becoming part of the patient record.',
+  },
+  {
+    id: 'faq_06',
+    category: 'Access & Governance',
+    question: 'Can an administrator access confidential patient therapy notes?',
+    answer: 'No. The platform architecture employs Relationship-Based Access Control (ReBAC). Administrators manage accounts and verifications, but are explicitly barred from viewing confidential clinical notes, transcripts, or treatment plans.',
+  },
+];
+
 export function FaqSection({ defaultExpandedId = 'faq_01' }) {
-  const [faqs, setFaqs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [faqs, setFaqs] = useState(FALLBACK_FAQS);
+  const [loading, setLoading] = useState(!isBackendConfigured() ? false : true);
   const [expandedId, setExpandedId] = useState(defaultExpandedId);
   const [activeCategory, setActiveCategory] = useState('All');
 
@@ -26,6 +66,13 @@ export function FaqSection({ defaultExpandedId = 'faq_01' }) {
 
   useEffect(() => {
     let mounted = true;
+
+    if (!isBackendConfigured()) {
+      setFaqs(FALLBACK_FAQS);
+      setLoading(false);
+      return;
+    }
+
     publicService
       .getPublishedFaqs()
       .then((res) => {
@@ -36,6 +83,7 @@ export function FaqSection({ defaultExpandedId = 'faq_01' }) {
       })
       .catch(() => {
         if (mounted) {
+          setFaqs(FALLBACK_FAQS);
           setLoading(false);
         }
       });
@@ -62,6 +110,11 @@ export function FaqSection({ defaultExpandedId = 'faq_01' }) {
 
     if (question.trim().length < 8) {
       setSubmitError('Your question must be at least 8 characters long.');
+      return;
+    }
+
+    if (!isBackendConfigured()) {
+      setSubmitError('FAQ question submission is currently unavailable while the backend service is being updated.');
       return;
     }
 

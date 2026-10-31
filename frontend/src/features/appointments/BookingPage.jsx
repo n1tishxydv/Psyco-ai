@@ -335,10 +335,15 @@ export function BookingPage() {
         {/* Step 2: Date & Available Time Slot Selection */}
         <Card className="border-slate-800 bg-slate-900/90 shadow-md">
           <CardContent className="p-6 space-y-4">
-            <h3 className="text-sm font-semibold text-teal-300 flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4 text-teal-400" />
-              2. Select Appointment Date & Open Slot
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-teal-300 flex items-center gap-2">
+                <CalendarIcon className="w-4 h-4 text-teal-400" />
+                2. Select Appointment Date & Open Slot
+              </h3>
+              <span className="text-[11px] text-slate-400 font-mono">
+                Times displayed in {Intl.DateTimeFormat().resolvedOptions().timeZone}
+              </span>
+            </div>
 
             {/* Quick Pick Day Selector Chips */}
             <div className="space-y-1.5">

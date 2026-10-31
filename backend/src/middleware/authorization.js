@@ -69,3 +69,65 @@ export function blockAdminFromClinicalRecords() {
     next();
   };
 }
+
+/**
+ * Enforces that only active, administrator-approved psychologists can access clinical functionality.
+ * Rejects pending or rejected psychologists with HTTP 403.
+ */
+export function requireVerifiedPsychologist() {
+  return async (req, res, next) => {
+    if (!req.user) {
+      return errorResponse(res, 'Authentication required before checking permissions', 401, 'UNAUTHORIZED');
+    }
+
+    if (req.user.role !== ROLES.PSYCHOLOGIST) {
+      return errorResponse(
+        res,
+        'Access denied. Clinician role required.',
+        403,
+        'INSUFFICIENT_ROLE_PERMISSIONS'
+      );
+    }
+
+    if (req.user.accountStatus === 'suspended') {
+      return errorResponse(
+        res,
+        'Access denied. Clinician account is suspended.',
+        403,
+        'ACCOUNT_SUSPENDED'
+      );
+    }
+
+    // Fast-path: Check approvalStatus on user object if already populated
+    if (req.user.approvalStatus === 'approved') {
+      return next();
+    }
+    if (req.user.approvalStatus && req.user.approvalStatus !== 'approved') {
+      return errorResponse(
+        res,
+        'Access denied. Clinician credentials are pending administrator verification or rejected.',
+        403,
+        'PSYCHOLOGIST_NOT_VERIFIED'
+      );
+    }
+
+    // Fallback: Query RTDB for authoritative approval status
+    try {
+      const { firebaseRtdbAdapter } = await import('../integrations/firebase/firebaseRtdbAdapter.js');
+      const psych = await firebaseRtdbAdapter.get(`psychologists/${req.user.uid}`);
+      const isApproved = psych?.approvalStatus === 'approved' || (psych?.verified === true && psych?.approvalStatus !== 'rejected');
+      if (!isApproved) {
+        return errorResponse(
+          res,
+          'Access denied. Clinician credentials are pending administrator verification or rejected.',
+          403,
+          'PSYCHOLOGIST_NOT_VERIFIED'
+        );
+      }
+      req.user.approvalStatus = 'approved';
+      next();
+    } catch (err) {
+      next(err);
+    }
+  };
+}

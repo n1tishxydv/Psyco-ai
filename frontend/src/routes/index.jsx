@@ -150,7 +150,7 @@ function RouteLoadingFallback() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-12 min-h-[50vh] space-y-3" role="status">
       <LoadingSpinner size="lg" />
-      <p className="text-xs text-secondaryText animate-pulse">Loading workspace...</p>
+      <p className="text-xs text-psyco-coolGrey animate-pulse">Loading workspace...</p>
     </div>
   );
 }

@@ -14,7 +14,7 @@ export function LoadingSpinner({ size = 'md', className = '' }) {
       role="status"
       aria-label="Loading"
       className={cn(
-        'inline-block animate-spin rounded-full border-softTeal/20 border-t-softTeal',
+        'inline-block animate-spin rounded-full border-psyco-steel/30 border-t-psyco-softGrey',
         sizeMap[size] || sizeMap.md,
         className
       )}

@@ -7,7 +7,6 @@ import { Badge } from '../../components/common/Badge';
 import { AlertBanner } from '../../components/common/AlertBanner';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import { profileService } from '../../services/profileService';
 import {
   auth,
@@ -17,8 +16,6 @@ import {
 } from '../../services/firebase';
 import {
   Settings,
-  Moon,
-  Sun,
   Shield,
   Bell,
   Lock,
@@ -28,11 +25,11 @@ import {
   CheckCircle2,
   User,
   ArrowRight,
+  Globe,
 } from 'lucide-react';
 
 export function SettingsPage() {
   const { user, firebaseUser, logout, refreshProfile } = useAuth();
-  const { theme, setTheme } = useTheme();
 
   const [activeTab, setActiveTab] = useState('preferences'); // 'preferences' | 'security' | 'danger'
   const [loading, setLoading] = useState(false);
@@ -41,7 +38,6 @@ export function SettingsPage() {
 
   // Preferences form state
   const [preferences, setPreferences] = useState({
-    theme: theme || 'dark',
     timezone: user?.preferences?.timezone || 'Asia/Kolkata',
     language: user?.preferences?.language || 'en',
     emailNotifications: user?.preferences?.emailNotifications ?? true,
@@ -62,13 +58,12 @@ export function SettingsPage() {
   useEffect(() => {
     if (user?.preferences) {
       setPreferences({
-        theme: user.preferences.theme || theme || 'dark',
         timezone: user.preferences.timezone || 'Asia/Kolkata',
         language: user.preferences.language || 'en',
         emailNotifications: user.preferences.emailNotifications ?? true,
       });
     }
-  }, [user, theme]);
+  }, [user]);
 
   // Save Preferences
   const handleSavePreferences = async (e) => {
@@ -79,7 +74,6 @@ export function SettingsPage() {
 
     try {
       await profileService.updatePreferences(preferences);
-      setTheme(preferences.theme);
       await refreshProfile();
       setSuccessMsg('Your preferences have been saved.');
       setTimeout(() => setSuccessMsg(null), 4000);
@@ -209,7 +203,7 @@ export function SettingsPage() {
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          Preferences & Theme
+          Preferences & Regional
         </button>
         <button
           type="button"
@@ -235,55 +229,21 @@ export function SettingsPage() {
         </button>
       </div>
 
-      {/* TAB 1: Preferences & Theme */}
+      {/* TAB 1: Preferences & Regional */}
       {activeTab === 'preferences' && (
-        <Card className="border-slate-800 bg-slate-900/90 shadow-xl">
+        <Card className="border-psyco-steel/70 bg-psyco-slate shadow-xl">
           <CardContent className="p-6 space-y-6">
-            <div className="border-b border-slate-800 pb-3">
-              <h3 className="text-base font-semibold text-slate-100 flex items-center gap-2">
-                <Moon className="w-5 h-5 text-teal-400" />
-                Appearance & Theme Preference
+            <div className="border-b border-psyco-steel/50 pb-3">
+              <h3 className="text-base font-semibold text-psyco-softGrey flex items-center gap-2">
+                <Globe className="w-5 h-5 text-psyco-coolGrey" />
+                Regional & Notification Preferences
               </h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Customize your display theme. Preference syncs automatically across your devices.
+              <p className="text-xs text-psyco-coolGrey mt-1">
+                Customize your localized timezone, interface language, and clinical communication notifications.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 max-w-md">
-              <button
-                type="button"
-                onClick={() => {
-                  setPreferences({ ...preferences, theme: 'dark' });
-                  setTheme('dark');
-                }}
-                className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                  preferences.theme === 'dark'
-                    ? 'bg-teal-950/30 border-teal-500/60 text-teal-300 shadow-md ring-1 ring-teal-500/30'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
-                }`}
-              >
-                <Moon className="w-6 h-6 text-teal-400" />
-                <span className="text-xs font-semibold">Dark Mode (Default)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setPreferences({ ...preferences, theme: 'light' });
-                  setTheme('light');
-                }}
-                className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                  preferences.theme === 'light'
-                    ? 'bg-teal-950/30 border-teal-500/60 text-teal-300 shadow-md ring-1 ring-teal-500/30'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
-                }`}
-              >
-                <Sun className="w-6 h-6 text-amber-400" />
-                <span className="text-xs font-semibold">Light Mode</span>
-              </button>
-            </div>
-
-            <form onSubmit={handleSavePreferences} className="space-y-4 pt-4 border-t border-slate-800">
+            <form onSubmit={handleSavePreferences} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Select
                   label="Primary Timezone"

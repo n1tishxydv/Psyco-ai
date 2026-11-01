@@ -28,14 +28,14 @@ export function InitialsAvatar({ name = '', email = '', size = 'md', className =
     '2xl': 'w-28 h-28 text-3xl font-bold',
   };
 
-  // Generate deterministic subtle gradient hue based on name
+  // Generate deterministic subtle tone based on name within official palette
   const getGradient = () => {
     const charCode = (name || email || 'P').charCodeAt(0);
     const hues = [
-      'from-teal-600 to-emerald-700 text-teal-100 border-teal-400/30',
-      'from-cyan-600 to-blue-700 text-cyan-100 border-cyan-400/30',
-      'from-indigo-600 to-sky-700 text-indigo-100 border-indigo-400/30',
-      'from-emerald-600 to-teal-800 text-emerald-100 border-emerald-400/30',
+      'from-psyco-slate to-psyco-darkNavy text-psyco-softGrey border-psyco-steel',
+      'from-psyco-steel/40 to-psyco-slate text-psyco-softGrey border-psyco-steel/70',
+      'from-psyco-darkNavy to-psyco-slate text-psyco-softGrey border-psyco-steel/80',
+      'from-psyco-slate/80 to-psyco-steel/30 text-psyco-softGrey border-psyco-steel',
     ];
     return hues[charCode % hues.length];
   };

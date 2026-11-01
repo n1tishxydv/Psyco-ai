@@ -18,71 +18,71 @@ export function StatusBadge({ status, size = 'sm', className = '' }) {
     // Appointments
     confirmed: {
       label: 'Confirmed',
-      variant: 'bg-calmGreen/15 text-calmGreen border-calmGreen/30',
+      variant: 'bg-emerald-950/40 text-emerald-300 border-emerald-700/50',
       icon: CheckCircle2,
     },
     pending: {
       label: 'Pending Approval',
-      variant: 'bg-mutedAmber/15 text-mutedAmber border-mutedAmber/30',
+      variant: 'bg-amber-950/40 text-amber-300 border-amber-700/50',
       icon: Clock,
     },
     pending_verification: {
       label: 'Pending Verification',
-      variant: 'bg-mutedAmber/15 text-mutedAmber border-mutedAmber/30',
+      variant: 'bg-amber-950/40 text-amber-300 border-amber-700/50',
       icon: Clock,
     },
     completed: {
       label: 'Completed',
-      variant: 'bg-softTeal/15 text-softTeal border-softTeal/30',
+      variant: 'bg-psyco-slate text-psyco-softGrey border-psyco-steel',
       icon: CalendarCheck,
     },
     cancelled: {
       label: 'Cancelled',
-      variant: 'bg-mutedCoral/15 text-mutedCoral border-mutedCoral/30',
+      variant: 'bg-red-950/40 text-red-300 border-red-700/50',
       icon: XCircle,
     },
     rescheduled: {
       label: 'Rescheduled',
-      variant: 'bg-mutedAmber/15 text-mutedAmber border-mutedAmber/30',
+      variant: 'bg-amber-950/40 text-amber-300 border-amber-700/50',
       icon: RefreshCw,
     },
     // Profiles & Verification
     approved: {
       label: 'Verified Clinician',
-      variant: 'bg-softTeal/15 text-softTeal border-softTeal/30',
+      variant: 'bg-psyco-slate text-psyco-softGrey border-psyco-steel',
       icon: ShieldCheck,
     },
     active: {
       label: 'Active',
-      variant: 'bg-calmGreen/15 text-calmGreen border-calmGreen/30',
+      variant: 'bg-emerald-950/40 text-emerald-300 border-emerald-700/50',
       icon: CheckCircle2,
     },
     suspended: {
       label: 'Suspended',
-      variant: 'bg-mutedCoral/15 text-mutedCoral border-mutedCoral/30',
+      variant: 'bg-red-950/40 text-red-300 border-red-700/50',
       icon: AlertCircle,
     },
     // Intake
     submitted: {
       label: 'Intake Completed',
-      variant: 'bg-calmGreen/15 text-calmGreen border-calmGreen/30',
+      variant: 'bg-emerald-950/40 text-emerald-300 border-emerald-700/50',
       icon: CheckCircle2,
     },
     draft: {
       label: 'Draft in Progress',
-      variant: 'bg-mutedAmber/15 text-mutedAmber border-mutedAmber/30',
+      variant: 'bg-amber-950/40 text-amber-300 border-amber-700/50',
       icon: FileText,
     },
     not_started: {
       label: 'Not Started',
-      variant: 'bg-slate-800 text-slate-400 border-slate-700',
+      variant: 'bg-psyco-slate text-psyco-coolGrey border-psyco-steel',
       icon: AlertCircle,
     },
   };
 
   const current = config[normalized] || {
     label: status ? status.replace(/_/g, ' ') : 'Unknown',
-    variant: 'bg-slate-800 text-slate-400 border-slate-700',
+    variant: 'bg-psyco-slate text-psyco-coolGrey border-psyco-steel',
     icon: AlertCircle,
   };
 

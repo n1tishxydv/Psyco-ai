@@ -4,12 +4,9 @@ import { Logo } from '../common/Logo';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
 import { InitialsAvatar } from '../common/InitialsAvatar';
-import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { NotificationBell } from '../common/NotificationBell';
 import {
-  Sun,
-  Moon,
   Menu,
   X,
   Stethoscope,
@@ -28,7 +25,6 @@ import {
 } from 'lucide-react';
 
 export function Navbar() {
-  const { theme, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -146,16 +142,6 @@ export function Navbar() {
 
           {/* Right Action Area */}
           <div className="hidden lg:flex items-center gap-3">
-            {/* Theme Toggle */}
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="p-2 rounded-lg text-secondaryText hover:text-primaryText hover:bg-elevatedSlate/60 transition-colors focus-visible:ring-2 focus-visible:ring-softTeal"
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
-            </button>
-
             {/* Notification Bell (Authenticated Users) */}
             {isAuthenticated && <NotificationBell />}
 
@@ -310,15 +296,6 @@ export function Navbar() {
 
           {/* Mobile Drawer Trigger (Minimum 48x48px Interactive Area - DEF-05) */}
           <div className="flex lg:hidden items-center gap-1.5">
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="min-w-[48px] min-h-[48px] p-3 rounded-lg text-secondaryText hover:text-primaryText flex items-center justify-center focus-visible:ring-2 focus-visible:ring-softTeal"
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
-            </button>
-
             {isAuthenticated && <NotificationBell />}
 
             <button

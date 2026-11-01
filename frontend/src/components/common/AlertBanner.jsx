@@ -11,23 +11,23 @@ export function AlertBanner({
   const configs = {
     info: {
       icon: Info,
-      style: 'bg-softTeal/10 border-softTeal/30 text-softTeal',
-      titleColor: 'text-primaryText',
+      style: 'bg-psyco-slate/60 border-psyco-steel text-psyco-softGrey',
+      titleColor: 'text-psyco-softGrey',
     },
     success: {
       icon: CheckCircle,
-      style: 'bg-calmGreen/10 border-calmGreen/30 text-calmGreen',
-      titleColor: 'text-primaryText',
+      style: 'bg-emerald-950/40 border-emerald-700/50 text-emerald-300',
+      titleColor: 'text-emerald-200',
     },
     warning: {
       icon: AlertTriangle,
-      style: 'bg-mutedAmber/10 border-mutedAmber/30 text-mutedAmber',
-      titleColor: 'text-primaryText',
+      style: 'bg-amber-950/40 border-amber-700/50 text-amber-300',
+      titleColor: 'text-amber-200',
     },
     error: {
       icon: AlertCircle,
-      style: 'bg-mutedCoral/10 border-mutedCoral/30 text-mutedCoral',
-      titleColor: 'text-primaryText',
+      style: 'bg-red-950/40 border-red-700/50 text-red-300',
+      titleColor: 'text-red-200',
     },
   };
 
@@ -46,7 +46,7 @@ export function AlertBanner({
       <Icon className="w-5 h-5 shrink-0 mt-0.5" />
       <div className="space-y-0.5">
         {title && <h5 className={cn('font-semibold', config.titleColor)}>{title}</h5>}
-        {message && <p className="text-secondaryText text-xs leading-relaxed">{message}</p>}
+        {message && <p className="text-psyco-coolGrey text-xs leading-relaxed">{message}</p>}
       </div>
     </div>
   );

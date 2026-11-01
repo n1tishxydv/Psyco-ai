@@ -2,19 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Official Psyco AI Palette */
+  --psyco-deep-navy: #06141B;
+  --psyco-dark-navy: #11212D;
+  --psyco-slate: #253745;
+  --psyco-steel: #4A5C6A;
+  --psyco-cool-grey: #9BA8AB;
+  --psyco-soft-grey: #CCD0CF;
+
+  /* Semantic Surface & Typography Tokens */
+  --bg-main: var(--psyco-deep-navy);
+  --surface-primary: var(--psyco-dark-navy);
+  --surface-elevated: var(--psyco-slate);
+  --border-subtle: var(--psyco-steel);
+  --text-primary: var(--psyco-soft-grey);
+  --text-secondary: var(--psyco-cool-grey);
+}
+
 @layer base {
-  html {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  }
-
-  /* Accessible focus rings */
-  :focus-visible {
-    @apply outline-none ring-2 ring-softTeal ring-offset-2 ring-offset-midnightNavy;
-  }
-
-  /* Smooth scroll */
-  html {
+  html, body {
+    background-color: #06141B;
+    color: #CCD0CF;
+    color-scheme: dark;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     scroll-behavior: smooth;
+    min-height: 100vh;
+  }
+
+  /* Accessible focus rings using soft grey and deep navy */
+  :focus-visible {
+    @apply outline-none ring-2 ring-[#CCD0CF]/60 ring-offset-2 ring-offset-[#06141B];
   }
 
   /* Reduced motion preference respect */
@@ -28,18 +46,18 @@
   }
 }
 
-/* Custom subtle scrollbars */
+/* Custom refined scrollbars using official palette */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #111B2B;
+  background: #06141B;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1D3042;
-  border-radius: 3px;
+  background: #253745;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #2D8276;
+  background: #4A5C6A;
 }

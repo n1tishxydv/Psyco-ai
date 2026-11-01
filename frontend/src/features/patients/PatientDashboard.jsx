@@ -149,23 +149,23 @@ export function PatientDashboard() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Welcome Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-gradient-to-r from-teal-950/40 via-deepBlueGray to-slate-900 rounded-2xl border border-teal-500/20 shadow-lg">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-psyco-darkNavy rounded-2xl border border-psyco-steel/60 shadow-lg">
         <div className="flex items-center gap-4">
           <InitialsAvatar
             name={displayName}
             email={user?.email}
             size="lg"
-            className="border-2 border-teal-500/40 shadow-sm"
+            className="border-2 border-psyco-steel/60 shadow-sm"
           />
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <Badge variant="teal" size="sm">Patient Portal</Badge>
-              <Badge variant="green" size="sm">Active Account</Badge>
+              <Badge variant="default" size="sm">Patient Portal</Badge>
+              <Badge variant="default" size="sm">Active Account</Badge>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-100">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-psyco-softGrey">
               {greeting}, {displayName}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400">
+            <p className="text-xs sm:text-sm text-psyco-coolGrey">
               Welcome to your confidential mental health workspace and consultation schedule.
             </p>
           </div>
@@ -193,19 +193,19 @@ export function PatientDashboard() {
 
       {/* Standardized Assessment Notification (Phase 7) */}
       {pendingAssessments.length > 0 && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-teal-950/60 via-slate-900 to-slate-900 border border-teal-500/40 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
+        <div className="p-4 sm:p-5 rounded-2xl bg-psyco-slate/50 border border-psyco-steel/80 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
           <div className="flex items-center gap-3.5">
-            <div className="p-3 rounded-xl bg-teal-500/20 text-teal-400 border border-teal-500/30 shrink-0">
-              <ClipboardCheck className="w-6 h-6 animate-pulse" />
+            <div className="p-3 rounded-xl bg-psyco-darkNavy text-psyco-softGrey border border-psyco-steel shrink-0">
+              <ClipboardCheck className="w-6 h-6" />
             </div>
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
-                <h4 className="text-sm font-bold text-slate-100">
+                <h4 className="text-sm font-bold text-psyco-softGrey">
                   Standardized Health Assessment Assigned ({pendingAssessments.length})
                 </h4>
-                <Badge variant="teal" size="sm">Action Requested</Badge>
+                <Badge variant="default" size="sm">Action Requested</Badge>
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-psyco-coolGrey leading-relaxed">
                 Your psychologist has assigned a progress evaluation questionnaire (PHQ-9 / GAD-7) to review your care.
               </p>
             </div>
@@ -232,80 +232,80 @@ export function PatientDashboard() {
         ) : (
           <>
             {/* Metric 1: Upcoming Sessions */}
-            <Card className="border-slate-800 bg-deepBlueGray/80">
+            <Card className="border-psyco-steel/60 bg-psyco-darkNavy shadow-sm">
               <CardContent className="p-5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-psyco-coolGrey uppercase tracking-wider">
                     Upcoming Sessions
                   </span>
-                  <div className="p-2 rounded-lg bg-softTeal/15 text-softTeal">
+                  <div className="p-2 rounded-lg bg-psyco-slate text-psyco-softGrey">
                     <Calendar className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-slate-100">
+                <div className="text-2xl font-bold text-psyco-softGrey">
                   {upcomingApts.length}
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-psyco-coolGrey">
                   Confirmed sessions on your calendar
                 </p>
               </CardContent>
             </Card>
 
             {/* Metric 2: Pending Requests */}
-            <Card className="border-slate-800 bg-deepBlueGray/80">
+            <Card className="border-psyco-steel/60 bg-psyco-darkNavy shadow-sm">
               <CardContent className="p-5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-psyco-coolGrey uppercase tracking-wider">
                     Pending Requests
                   </span>
-                  <div className="p-2 rounded-lg bg-mutedAmber/15 text-mutedAmber">
+                  <div className="p-2 rounded-lg bg-psyco-slate text-amber-400">
                     <Clock className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-slate-100">
+                <div className="text-2xl font-bold text-psyco-softGrey">
                   {pendingApts.length}
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-psyco-coolGrey">
                   Awaiting clinician confirmation
                 </p>
               </CardContent>
             </Card>
 
             {/* Metric 3: Completed Consultations */}
-            <Card className="border-slate-800 bg-deepBlueGray/80">
+            <Card className="border-psyco-steel/60 bg-psyco-darkNavy shadow-sm">
               <CardContent className="p-5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-psyco-coolGrey uppercase tracking-wider">
                     Past Consultations
                   </span>
-                  <div className="p-2 rounded-lg bg-calmGreen/15 text-calmGreen">
+                  <div className="p-2 rounded-lg bg-psyco-slate text-emerald-400">
                     <CalendarCheck className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold text-slate-100">
+                <div className="text-2xl font-bold text-psyco-softGrey">
                   {completedApts.length}
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-psyco-coolGrey">
                   Total completed therapy hours
                 </p>
               </CardContent>
             </Card>
 
             {/* Metric 4: Intake Questionnaire */}
-            <Card className="border-slate-800 bg-deepBlueGray/80">
+            <Card className="border-psyco-steel/60 bg-psyco-darkNavy shadow-sm">
               <CardContent className="p-5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-psyco-coolGrey uppercase tracking-wider">
                     Clinical Intake
                   </span>
-                  <div className="p-2 rounded-lg bg-slate-800 text-softTeal">
+                  <div className="p-2 rounded-lg bg-psyco-slate text-psyco-softGrey">
                     <ClipboardList className="w-4 h-4" />
                   </div>
                 </div>
                 <div className="pt-1">
                   <StatusBadge status={intakeStatus} size="sm" />
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-psyco-coolGrey">
                   {intakeStatus === 'submitted' ? 'Verified & signed by you' : 'Background & health survey'}
                 </p>
               </CardContent>
@@ -318,12 +318,12 @@ export function PatientDashboard() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-slate-100">Next Scheduled Consultation</h2>
-            <Badge variant="teal" size="sm">Spotlight</Badge>
+            <h2 className="text-lg font-bold text-psyco-softGrey">Next Scheduled Consultation</h2>
+            <Badge variant="default" size="sm">Spotlight</Badge>
           </div>
           <Link
             to="/patient/appointments"
-            className="text-xs font-medium text-softTeal hover:underline flex items-center gap-1"
+            className="text-xs font-medium text-psyco-softGrey hover:underline flex items-center gap-1"
           >
             <span>View All ({appointments.length})</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -339,7 +339,7 @@ export function PatientDashboard() {
             onReschedule={() => navigate('/patient/appointments')}
           />
         ) : (
-          <Card className="border-dashed border-slate-800 bg-slate-900/40">
+          <Card className="border-dashed border-psyco-steel bg-psyco-darkNavy/40">
             <CardContent className="p-8">
               <EmptyState
                 icon={Calendar}
@@ -356,25 +356,25 @@ export function PatientDashboard() {
       {/* Primary Navigation & Care Services Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Intake Questionnaire Card */}
-        <Card className="border-teal-500/20 bg-deepBlueGray/80 shadow-md hover:border-teal-500/40 transition-all flex flex-col justify-between">
+        <Card className="border-psyco-steel/60 bg-psyco-darkNavy shadow-md hover:border-psyco-steel transition-all flex flex-col justify-between">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <div className="p-3 rounded-xl bg-softTeal/10 text-softTeal">
+              <div className="p-3 rounded-xl bg-psyco-slate text-psyco-softGrey">
                 <ClipboardList className="w-6 h-6" />
               </div>
               <StatusBadge status={intakeStatus} />
             </div>
 
             <div className="space-y-1">
-              <h3 className="text-base font-semibold text-slate-100">Clinical Intake Form</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <h3 className="text-base font-semibold text-psyco-softGrey">Clinical Intake Form</h3>
+              <p className="text-xs text-psyco-coolGrey leading-relaxed">
                 {intakeStatus === 'submitted'
                   ? 'Your medical background and consents are securely recorded and accessible to your treating clinician.'
                   : 'Complete your health history, therapy goals, and safety disclosures before your appointment.'}
               </p>
             </div>
 
-            <div className="pt-2 border-t border-slate-800">
+            <div className="pt-2 border-t border-psyco-steel/50">
               <Link to="/patient/intake">
                 <Button variant="primary" size="sm" className="w-full flex items-center justify-center gap-2">
                   <span>{intakeStatus === 'submitted' ? 'Review Intake Record' : 'Continue Intake Form'}</span>
@@ -386,23 +386,23 @@ export function PatientDashboard() {
         </Card>
 
         {/* Care Plan & Exercises Card */}
-        <Card className="border-slate-800 bg-deepBlueGray/80 shadow-md hover:border-slate-700 transition-all flex flex-col justify-between">
+        <Card className="border-psyco-steel/60 bg-psyco-darkNavy shadow-md hover:border-psyco-steel transition-all flex flex-col justify-between">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <div className="p-3 rounded-xl bg-slate-800 text-softTeal">
+              <div className="p-3 rounded-xl bg-psyco-slate text-psyco-softGrey">
                 <Activity className="w-6 h-6" />
               </div>
-              <Badge variant="teal" size="sm">Care Management</Badge>
+              <Badge variant="default" size="sm">Care Management</Badge>
             </div>
 
             <div className="space-y-1">
-              <h3 className="text-base font-semibold text-slate-100">Care Plan & Homework</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <h3 className="text-base font-semibold text-psyco-softGrey">Care Plan & Homework</h3>
+              <p className="text-xs text-psyco-coolGrey leading-relaxed">
                 Review individualized treatment goals, between-session exercises, and verified session summaries.
               </p>
             </div>
 
-            <div className="pt-2 border-t border-slate-800">
+            <div className="pt-2 border-t border-psyco-steel/50">
               <Link to="/patient/care-plan">
                 <Button variant="secondary" size="sm" className="w-full flex items-center justify-center gap-2">
                   <span>Open Care Plan</span>
@@ -414,23 +414,23 @@ export function PatientDashboard() {
         </Card>
 
         {/* Directory Card */}
-        <Card className="border-slate-800 bg-deepBlueGray/80 shadow-md hover:border-slate-700 transition-all flex flex-col justify-between">
+        <Card className="border-psyco-steel/60 bg-psyco-darkNavy shadow-md hover:border-psyco-steel transition-all flex flex-col justify-between">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <div className="p-3 rounded-xl bg-slate-800 text-softTeal">
+              <div className="p-3 rounded-xl bg-psyco-slate text-psyco-softGrey">
                 <User className="w-6 h-6" />
               </div>
-              <Badge variant="green" size="sm">Verified Directory</Badge>
+              <Badge variant="default" size="sm">Verified Directory</Badge>
             </div>
 
             <div className="space-y-1">
-              <h3 className="text-base font-semibold text-slate-100">Find a Psychologist</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <h3 className="text-base font-semibold text-psyco-softGrey">Find a Psychologist</h3>
+              <p className="text-xs text-psyco-coolGrey leading-relaxed">
                 Browse verified clinical specialists by therapeutic focus (CBT, Trauma, Anxiety) and schedule sessions.
               </p>
             </div>
 
-            <div className="pt-2 border-t border-slate-800">
+            <div className="pt-2 border-t border-psyco-steel/50">
               <Link to="/find-psychologist">
                 <Button variant="secondary" size="sm" className="w-full flex items-center justify-center gap-2">
                   <span>Browse Clinicians</span>

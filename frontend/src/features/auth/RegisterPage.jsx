@@ -169,25 +169,25 @@ export function RegisterPage() {
     <div className="flex-1 flex items-center justify-center p-4 py-12">
       <div className="w-full max-w-xl space-y-6">
         <div className="text-center space-y-2">
-          <Badge variant="teal" size="sm">Create Account</Badge>
-          <h1 className="text-3xl font-bold tracking-tight text-primaryText">Join Psyco AI</h1>
-          <p className="text-sm text-secondaryText">
+          <Badge variant="default" size="sm">Create Account</Badge>
+          <h1 className="text-3xl font-bold tracking-tight text-psyco-softGrey">Join Psyco AI</h1>
+          <p className="text-sm text-psyco-coolGrey">
             Connect to mental health practice management with clinical privacy.
           </p>
         </div>
 
         {/* Role Selector Tabs */}
-        <div className="flex p-1.5 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-inner">
+        <div className="flex p-1.5 bg-psyco-darkNavy border border-psyco-steel/60 rounded-2xl shadow-inner">
           <button
             type="button"
             onClick={() => { setRoleTab('patient'); setErrorMsg(null); }}
             className={`flex-1 flex items-center justify-center gap-2.5 py-3 text-sm font-semibold rounded-xl transition-all ${
               roleTab === 'patient'
-                ? 'bg-slate-800 text-teal-300 border border-teal-500/30 shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-psyco-slate text-psyco-softGrey border border-psyco-steel shadow-md'
+                : 'text-psyco-coolGrey hover:text-psyco-softGrey'
             }`}
           >
-            <User className="w-4 h-4 text-teal-400" />
+            <User className="w-4 h-4 text-psyco-softGrey" />
             Patient Registration
           </button>
           <button
@@ -195,11 +195,11 @@ export function RegisterPage() {
             onClick={() => { setRoleTab('psychologist'); setErrorMsg(null); }}
             className={`flex-1 flex items-center justify-center gap-2.5 py-3 text-sm font-semibold rounded-xl transition-all ${
               roleTab === 'psychologist'
-                ? 'bg-slate-800 text-emerald-300 border border-emerald-500/30 shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-psyco-slate text-psyco-softGrey border border-psyco-steel shadow-md'
+                : 'text-psyco-coolGrey hover:text-psyco-softGrey'
             }`}
           >
-            <Stethoscope className="w-4 h-4 text-emerald-400" />
+            <Stethoscope className="w-4 h-4 text-psyco-softGrey" />
             Psychologist Registration
           </button>
         </div>
@@ -208,14 +208,14 @@ export function RegisterPage() {
           <AlertBanner type="error" title="Registration Error" message={errorMsg} />
         )}
 
-        <Card className="shadow-xl border-slate-700/60 bg-slate-900/80 backdrop-blur-sm">
+        <Card className="shadow-xl border-psyco-steel/60 bg-psyco-darkNavy/90 backdrop-blur-sm">
           <CardContent className="pt-6 space-y-6">
             {/* Quickstart with Google */}
             <Button
               type="button"
               variant="outline"
               size="md"
-              className="w-full flex items-center justify-center gap-3 border-slate-700 hover:bg-slate-800 text-slate-200"
+              className="w-full flex items-center justify-center gap-3 border-psyco-steel/60 hover:bg-psyco-slate text-psyco-softGrey"
               onClick={handleGoogleQuickstart}
               disabled={googleLoading || loading}
             >
@@ -233,8 +233,8 @@ export function RegisterPage() {
             </Button>
 
             <div className="relative flex items-center justify-center">
-              <div className="border-t border-slate-700/80 w-full" />
-              <span className="bg-slate-900 px-3 text-xs text-slate-400 uppercase tracking-wider">
+              <div className="border-t border-psyco-steel/60 w-full" />
+              <span className="bg-psyco-darkNavy px-3 text-xs text-psyco-coolGrey uppercase tracking-wider">
                 Or register with email
               </span>
             </div>
@@ -319,24 +319,24 @@ export function RegisterPage() {
                   disabled={loading}
                 />
 
-                <div className="p-3 bg-teal-950/20 border border-teal-500/20 rounded-xl text-xs text-teal-300/90 leading-relaxed flex items-start gap-2">
-                  <ShieldCheck className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
+                <div className="p-3 bg-psyco-slate/50 border border-psyco-steel/60 rounded-xl text-xs text-psyco-coolGrey leading-relaxed flex items-start gap-2">
+                  <ShieldCheck className="w-4 h-4 text-psyco-softGrey mt-0.5 flex-shrink-0" />
                   <span>
                     Your personal demographics are encrypted. Full clinical history and intake assessment take place confidentially in the next step.
                   </span>
                 </div>
 
-                <p className="text-[11px] text-slate-400 text-center leading-relaxed">
+                <p className="text-[11px] text-psyco-coolGrey text-center leading-relaxed">
                   By registering, you acknowledge and agree to the Psyco AI{' '}
-                  <Link to="/terms" className="text-softTeal underline hover:text-teal-300" target="_blank">
+                  <Link to="/terms" className="text-psyco-softGrey underline hover:text-white" target="_blank">
                     Terms of Service
                   </Link>
                   ,{' '}
-                  <Link to="/privacy-policy" className="text-softTeal underline hover:text-teal-300" target="_blank">
+                  <Link to="/privacy-policy" className="text-psyco-softGrey underline hover:text-white" target="_blank">
                     Privacy Policy
                   </Link>
                   , and{' '}
-                  <Link to="/medical-disclaimer" className="text-softTeal underline hover:text-teal-300" target="_blank">
+                  <Link to="/medical-disclaimer" className="text-psyco-softGrey underline hover:text-white" target="_blank">
                     Medical Disclaimer
                   </Link>
                   .
@@ -447,17 +447,17 @@ export function RegisterPage() {
                   disabled={loading}
                 />
 
-                <p className="text-[11px] text-slate-400 text-center leading-relaxed">
+                <p className="text-[11px] text-psyco-coolGrey text-center leading-relaxed">
                   By registering as a clinician, you certify your active professional license and agree to the Psyco AI{' '}
-                  <Link to="/terms" className="text-softTeal underline hover:text-teal-300" target="_blank">
+                  <Link to="/terms" className="text-psyco-softGrey underline hover:text-white" target="_blank">
                     Terms of Service
                   </Link>
                   ,{' '}
-                  <Link to="/ai-transparency" className="text-softTeal underline hover:text-teal-300" target="_blank">
+                  <Link to="/ai-transparency" className="text-psyco-softGrey underline hover:text-white" target="_blank">
                     AI Transparency Policy
                   </Link>
                   , and{' '}
-                  <Link to="/data-privacy" className="text-softTeal underline hover:text-teal-300" target="_blank">
+                  <Link to="/data-privacy" className="text-psyco-softGrey underline hover:text-white" target="_blank">
                     Data Privacy Architecture
                   </Link>
                   .
@@ -476,9 +476,9 @@ export function RegisterPage() {
               </form>
             )}
 
-            <div className="pt-4 border-t border-slate-800 text-center text-xs text-secondaryText">
+            <div className="pt-4 border-t border-psyco-steel/40 text-center text-xs text-psyco-coolGrey">
               <span>Already have an account? </span>
-              <Link to="/login" className="text-softTeal hover:underline font-semibold ml-1">
+              <Link to="/login" className="text-psyco-softGrey hover:underline font-semibold ml-1">
                 Sign In
               </Link>
             </div>

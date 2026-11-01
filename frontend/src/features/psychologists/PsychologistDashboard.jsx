@@ -214,25 +214,25 @@ export function PsychologistDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Welcome Banner */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 sm:p-8 bg-gradient-to-r from-teal-950/40 via-slate-900 to-slate-900 rounded-3xl border border-teal-500/20 shadow-2xl">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 p-6 sm:p-8 bg-psyco-darkNavy rounded-3xl border border-psyco-steel/60 shadow-xl">
         <div className="flex items-start sm:items-center gap-4">
           <InitialsAvatar name={displayName} email={user?.email} size="xl" />
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2 mb-1">
-              <Badge variant={isApproved ? 'green' : 'amber'} size="sm">
+              <Badge variant={isApproved ? 'default' : 'outline'} size="sm">
                 {isApproved ? 'Verified Clinician' : 'Verification Review'}
               </Badge>
-              <Badge variant="teal" size="sm">
+              <Badge variant="default" size="sm">
                 License: {psych.licenseNumber || 'Active Clinical Practice'}
               </Badge>
-              <Badge variant="neutral" size="sm">
+              <Badge variant="outline" size="sm">
                 {new Date().toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })}
               </Badge>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-100">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-psyco-softGrey">
               {greeting}, {displayName}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-xl">
+            <p className="text-xs sm:text-sm text-psyco-coolGrey max-w-xl">
               Clinical Practice Management, Autonomous Scheduling & Therapeutic Workspace.
             </p>
           </div>
@@ -246,7 +246,7 @@ export function PsychologistDashboard() {
                 value={workspace.activePracticeId}
                 onChange={(e) => handleSwitchPractice(e.target.value)}
                 disabled={actionLoading}
-                className="w-full px-3 py-2 bg-slate-950 border border-teal-500/40 rounded-xl text-xs text-teal-300 font-semibold focus:outline-none focus:ring-1 focus:ring-teal-400"
+                className="w-full px-3 py-2 bg-psyco-deepNavy border border-psyco-steel/80 rounded-xl text-xs text-psyco-softGrey font-semibold focus:outline-none focus:ring-1 focus:ring-psyco-steel"
               >
                 {workspace.availableContexts.map((ctx) => (
                   <option key={ctx.practiceId} value={ctx.practiceId}>
@@ -259,13 +259,13 @@ export function PsychologistDashboard() {
 
           <Link to="/psychologist/practice-setup">
             <Button variant="secondary" size="sm" className="flex items-center justify-center gap-2 text-xs w-full sm:w-auto">
-              <Sliders className="w-4 h-4 text-teal-400" />
+              <Sliders className="w-4 h-4 text-psyco-softGrey" />
               Practice Setup
             </Button>
           </Link>
 
           <Link to="/psychologist/profile">
-            <Button variant="ghost" size="sm" className="flex items-center justify-center gap-2 text-xs text-slate-300 hover:text-white w-full sm:w-auto">
+            <Button variant="ghost" size="sm" className="flex items-center justify-center gap-2 text-xs text-psyco-coolGrey hover:text-psyco-softGrey w-full sm:w-auto">
               <User className="w-4 h-4" />
               Profile
             </Button>
@@ -281,16 +281,16 @@ export function PsychologistDashboard() {
 
       {/* Incomplete Setup Guidance Banner */}
       {workspace && !workspace.independentPractice?.setupCompleted && (
-        <div className="p-4 rounded-2xl bg-teal-950/30 border border-teal-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-3 text-teal-200">
-            <Sparkles className="w-5 h-5 text-teal-400 flex-shrink-0" />
+        <div className="p-4 rounded-2xl bg-psyco-slate/50 border border-psyco-steel/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3 text-psyco-softGrey">
+            <Sparkles className="w-5 h-5 text-psyco-softGrey flex-shrink-0" />
             <div>
-              <span className="font-bold text-teal-300 block">Complete Your Practice Configuration:</span>
-              Configure your practice brand, offered modes, and office locations to optimize patient booking.
+              <span className="font-bold text-psyco-softGrey block">Complete Your Practice Configuration:</span>
+              <span className="text-psyco-coolGrey">Configure your practice brand, offered modes, and office locations to optimize patient booking.</span>
             </div>
           </div>
           <Link to="/psychologist/practice-setup" className="self-start sm:self-auto flex-shrink-0">
-            <Button variant="primary" size="sm" className="text-xs bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold">
+            <Button variant="primary" size="sm" className="text-xs font-semibold">
               Complete Setup
             </Button>
           </Link>
@@ -308,77 +308,77 @@ export function PsychologistDashboard() {
           </>
         ) : (
           <>
-            <Card className="border-slate-800 bg-slate-900/90 shadow-md">
+            <Card className="border-psyco-steel/60 bg-psyco-darkNavy shadow-sm">
               <CardContent className="p-5 flex items-center justify-between">
                 <div>
-                  <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <div className="text-[11px] font-semibold text-psyco-coolGrey uppercase tracking-wider">
                     Today's Schedule
                   </div>
-                  <div className="text-2xl font-bold text-slate-100 mt-1">
+                  <div className="text-2xl font-bold text-psyco-softGrey mt-1">
                     {todayAppointments.length}
                   </div>
-                  <div className="text-[10px] text-teal-400 mt-0.5">
+                  <div className="text-[10px] text-psyco-coolGrey mt-0.5">
                     {todayAppointments.length === 1 ? '1 Consultation' : `${todayAppointments.length} Consultations`}
                   </div>
                 </div>
-                <div className="p-3 rounded-xl bg-teal-500/10 text-teal-400">
+                <div className="p-3 rounded-xl bg-psyco-slate text-psyco-softGrey">
                   <Clock className="w-6 h-6" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-slate-800 bg-slate-900/90 shadow-md">
+            <Card className="border-psyco-steel/60 bg-psyco-darkNavy shadow-sm">
               <CardContent className="p-5 flex items-center justify-between">
                 <div>
-                  <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <div className="text-[11px] font-semibold text-psyco-coolGrey uppercase tracking-wider">
                     Pending Requests
                   </div>
-                  <div className="text-2xl font-bold text-slate-100 mt-1">
+                  <div className="text-2xl font-bold text-psyco-softGrey mt-1">
                     {pendingRequests.length}
                   </div>
                   <div className="text-[10px] text-amber-400 mt-0.5">
                     {pendingRequests.length > 0 ? 'Requires Clinician Review' : 'All clear'}
                   </div>
                 </div>
-                <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400">
+                <div className="p-3 rounded-xl bg-psyco-slate text-amber-400">
                   <AlertTriangle className="w-6 h-6" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-slate-800 bg-slate-900/90 shadow-md">
+            <Card className="border-psyco-steel/60 bg-psyco-darkNavy shadow-sm">
               <CardContent className="p-5 flex items-center justify-between">
                 <div>
-                  <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <div className="text-[11px] font-semibold text-psyco-coolGrey uppercase tracking-wider">
                     Active Patient Roster
                   </div>
-                  <div className="text-2xl font-bold text-slate-100 mt-1">
+                  <div className="text-2xl font-bold text-psyco-softGrey mt-1">
                     {patients.length}
                   </div>
                   <div className="text-[10px] text-emerald-400 mt-0.5">
                     Assigned therapeutic cases
                   </div>
                 </div>
-                <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
+                <div className="p-3 rounded-xl bg-psyco-slate text-emerald-400">
                   <Users className="w-6 h-6" />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-slate-800 bg-slate-900/90 shadow-md">
+            <Card className="border-psyco-steel/60 bg-psyco-darkNavy shadow-sm">
               <CardContent className="p-5 flex items-center justify-between">
                 <div>
-                  <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <div className="text-[11px] font-semibold text-psyco-coolGrey uppercase tracking-wider">
                     Upcoming Consultations
                   </div>
-                  <div className="text-2xl font-bold text-slate-100 mt-1">
+                  <div className="text-2xl font-bold text-psyco-softGrey mt-1">
                     {upcomingConsultations.length}
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">
+                  <div className="text-[10px] text-psyco-coolGrey mt-0.5">
                     Confirmed future sessions
                   </div>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-800 text-teal-400">
+                <div className="p-3 rounded-xl bg-psyco-slate text-psyco-softGrey">
                   <Calendar className="w-6 h-6" />
                 </div>
               </CardContent>
@@ -392,22 +392,22 @@ export function PsychologistDashboard() {
         {/* Left Column (2 spans): Today's Schedule */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-teal-400" />
+            <h2 className="text-lg font-bold text-psyco-softGrey flex items-center gap-2">
+              <Clock className="w-5 h-5 text-psyco-softGrey" />
               Today's Clinical Schedule ({new Date().toLocaleDateString([], { month: 'short', day: 'numeric' })})
             </h2>
             <Link to="/psychologist/appointments">
-              <Button variant="ghost" size="sm" className="text-xs text-teal-300 hover:text-teal-200">
+              <Button variant="ghost" size="sm" className="text-xs text-psyco-softGrey hover:text-white">
                 View Full Calendar <ArrowRight className="w-3.5 h-3.5 ml-1" />
               </Button>
             </Link>
           </div>
 
           {todayAppointments.length === 0 ? (
-            <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center space-y-2">
-              <Clock className="w-8 h-8 text-slate-600 mx-auto" />
-              <h3 className="text-sm font-semibold text-slate-300">No Consultations Scheduled for Today</h3>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <div className="p-8 rounded-2xl bg-psyco-darkNavy border border-psyco-steel/60 text-center space-y-2">
+              <Clock className="w-8 h-8 text-psyco-steel mx-auto" />
+              <h3 className="text-sm font-semibold text-psyco-softGrey">No Consultations Scheduled for Today</h3>
+              <p className="text-xs text-psyco-coolGrey max-w-sm mx-auto">
                 You have no confirmed therapy sessions today. Review incoming appointment requests or manage availability.
               </p>
               <Link to="/psychologist/availability" className="inline-block pt-2">
@@ -426,33 +426,33 @@ export function PsychologistDashboard() {
                 return (
                   <Card
                     key={apt.id}
-                    className="border-slate-800 bg-slate-900/90 shadow-md hover:border-slate-700 transition-all"
+                    className="border-psyco-steel/60 bg-psyco-darkNavy shadow-md hover:border-psyco-steel transition-all"
                   >
                     <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex items-start gap-3.5">
                         <InitialsAvatar name={apt.patientName} size="md" />
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-bold text-slate-100">{apt.patientName}</h4>
+                            <h4 className="text-sm font-bold text-psyco-softGrey">{apt.patientName}</h4>
                             <StatusBadge status={apt.status} size="sm" />
                           </div>
-                          <div className="text-xs text-slate-300 flex items-center gap-2 font-medium">
-                            <Clock className="w-3.5 h-3.5 text-teal-400" />
+                          <div className="text-xs text-psyco-softGrey flex items-center gap-2 font-medium">
+                            <Clock className="w-3.5 h-3.5 text-psyco-softGrey" />
                             <span>
                               {start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} –{' '}
                               {end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{' '}
                               ({apt.durationMinutes || 50} mins)
                             </span>
                           </div>
-                          <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                          <div className="text-[11px] text-psyco-coolGrey flex items-center gap-1.5">
                             {isOnline ? (
                               <>
-                                <Video className="w-3.5 h-3.5 text-teal-400" />
+                                <Video className="w-3.5 h-3.5 text-psyco-softGrey" />
                                 <span>Online Telehealth Session</span>
                               </>
                             ) : (
                               <>
-                                <MapPin className="w-3.5 h-3.5 text-teal-400" />
+                                <MapPin className="w-3.5 h-3.5 text-psyco-softGrey" />
                                 <span>{apt.location?.addressOrUrl || 'In-Person Practice Clinic'}</span>
                               </>
                             )}
@@ -466,7 +466,7 @@ export function PsychologistDashboard() {
                             href={apt.googleMeetUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs font-semibold hover:bg-teal-500/20 transition-all"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-psyco-slate border border-psyco-steel/80 text-psyco-softGrey text-xs font-semibold hover:bg-psyco-steel transition-all"
                           >
                             <Video className="w-3.5 h-3.5" />
                             Join Video
@@ -492,17 +492,17 @@ export function PsychologistDashboard() {
         {/* Right Column (1 span): Incoming Requests & Alerts */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+            <h2 className="text-lg font-bold text-psyco-softGrey flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-amber-400" />
               Incoming Requests ({pendingRequests.length})
             </h2>
           </div>
 
           {pendingRequests.length === 0 ? (
-            <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 text-center space-y-2">
+            <div className="p-6 rounded-2xl bg-psyco-darkNavy border border-psyco-steel/60 text-center space-y-2">
               <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto" />
-              <h4 className="text-xs font-semibold text-slate-300">No Pending Requests</h4>
-              <p className="text-[11px] text-slate-500">
+              <h4 className="text-xs font-semibold text-psyco-softGrey">No Pending Requests</h4>
+              <p className="text-[11px] text-psyco-coolGrey">
                 All incoming patient booking requests have been reviewed.
               </p>
             </div>
@@ -511,12 +511,12 @@ export function PsychologistDashboard() {
               {pendingRequests.map((req) => (
                 <div
                   key={req.id}
-                  className="p-4 bg-slate-900 rounded-2xl border border-amber-500/30 space-y-3 shadow-md"
+                  className="p-4 bg-psyco-darkNavy rounded-2xl border border-psyco-steel/60 space-y-3 shadow-md"
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <h4 className="text-xs font-bold text-slate-100">{req.patientName}</h4>
-                      <p className="text-[11px] text-slate-400">
+                      <h4 className="text-xs font-bold text-psyco-softGrey">{req.patientName}</h4>
+                      <p className="text-[11px] text-psyco-coolGrey">
                         {new Date(req.startTime).toLocaleString([], {
                           dateStyle: 'short',
                           timeStyle: 'short',

@@ -35,21 +35,21 @@ export function ConfirmationDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-psyco-deepNavy/80 backdrop-blur-sm animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirmation-dialog-title"
     >
       <div
         ref={dialogRef}
-        className="relative w-full max-w-md p-6 bg-deepBlueGray border border-slate-700/80 rounded-2xl shadow-2xl space-y-4 animate-scale-up"
+        className="relative w-full max-w-md p-6 bg-psyco-darkNavy border border-psyco-steel/80 rounded-2xl shadow-2xl space-y-4 animate-scale-up"
       >
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
           disabled={loading}
-          className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+          className="absolute top-4 right-4 p-1 rounded-lg text-psyco-coolGrey hover:text-psyco-softGrey hover:bg-psyco-slate transition-colors"
           aria-label="Close dialog"
         >
           <X className="w-5 h-5" />
@@ -57,14 +57,14 @@ export function ConfirmationDialog({
 
         {/* Header */}
         <div className="flex items-start gap-3.5">
-          <div className="p-3 rounded-xl bg-mutedCoral/15 text-mutedCoral shrink-0 border border-mutedCoral/20">
+          <div className="p-3 rounded-xl bg-red-950/40 text-red-300 shrink-0 border border-red-700/50">
             <AlertTriangle className="w-6 h-6" />
           </div>
           <div className="space-y-1">
-            <h3 id="confirmation-dialog-title" className="text-lg font-semibold text-slate-100">
+            <h3 id="confirmation-dialog-title" className="text-lg font-semibold text-psyco-softGrey">
               {title}
             </h3>
-            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-psyco-coolGrey leading-relaxed">
               {description}
             </p>
           </div>
@@ -86,7 +86,7 @@ export function ConfirmationDialog({
         )}
 
         {/* Action Controls */}
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+        <div className="flex items-center justify-end gap-3 pt-3 border-t border-psyco-steel/50">
           <Button
             type="button"
             variant="ghost"

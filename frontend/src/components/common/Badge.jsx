@@ -8,11 +8,12 @@ export function Badge({
   className = '',
 }) {
   const variants = {
-    teal: 'bg-softTeal/15 text-softTeal border-softTeal/30',
-    green: 'bg-calmGreen/15 text-calmGreen border-calmGreen/30',
-    amber: 'bg-mutedAmber/15 text-mutedAmber border-mutedAmber/30',
-    coral: 'bg-mutedCoral/15 text-mutedCoral border-mutedCoral/30',
-    slate: 'bg-elevatedSlate text-secondaryText border-slate-700',
+    teal: 'bg-psyco-slate text-psyco-softGrey border-psyco-steel',
+    slate: 'bg-psyco-slate text-psyco-coolGrey border-psyco-steel',
+    steel: 'bg-psyco-steel/30 text-psyco-softGrey border-psyco-steel',
+    green: 'bg-emerald-950/40 text-emerald-300 border-emerald-700/50',
+    amber: 'bg-amber-950/40 text-amber-300 border-amber-700/50',
+    coral: 'bg-red-950/40 text-red-300 border-red-700/50',
   };
 
   const sizes = {

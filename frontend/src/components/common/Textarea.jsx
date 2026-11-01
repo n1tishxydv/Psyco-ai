@@ -22,9 +22,9 @@ export const Textarea = forwardRef(function Textarea(
       {label && (
         <label
           htmlFor={textareaId}
-          className="block text-xs font-medium tracking-wide uppercase text-secondaryText"
+          className="block text-xs font-medium tracking-wide uppercase text-psyco-coolGrey"
         >
-          {label} {required && <span className="text-mutedCoral">*</span>}
+          {label} {required && <span className="text-red-400">*</span>}
         </label>
       )}
 
@@ -35,19 +35,19 @@ export const Textarea = forwardRef(function Textarea(
         disabled={disabled}
         required={required}
         className={cn(
-          'w-full bg-deepBlueGray/70 border rounded-lg px-3.5 py-2 text-sm text-primaryText placeholder:text-secondaryText/60 transition-colors duration-150',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-softTeal focus-visible:border-softTeal',
+          'w-full bg-psyco-darkNavy border rounded-xl px-3.5 py-2 text-sm text-psyco-softGrey placeholder:text-psyco-coolGrey/50 transition-colors duration-150',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-psyco-softGrey/50 focus-visible:border-psyco-coolGrey',
           'disabled:opacity-50 disabled:cursor-not-allowed',
-          error ? 'border-mutedCoral focus-visible:ring-mutedCoral' : 'border-slate-700/80 hover:border-slate-600',
+          error ? 'border-red-500/80 focus-visible:ring-red-400' : 'border-psyco-steel/80 hover:border-psyco-coolGrey/50',
           className
         )}
         {...props}
       />
 
       {error ? (
-        <p className="text-xs text-mutedCoral">{error}</p>
+        <p className="text-xs text-red-400">{error}</p>
       ) : helperText ? (
-        <p className="text-xs text-secondaryText">{helperText}</p>
+        <p className="text-xs text-psyco-coolGrey">{helperText}</p>
       ) : null}
     </div>
   );

@@ -11,17 +11,17 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        'flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800/80',
+        'flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-psyco-steel/50',
         className
       )}
     >
       <div className="space-y-1.5">
         {badge && <div className="mb-1">{badge}</div>}
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-100">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-psyco-softGrey">
           {title}
         </h1>
         {description && (
-          <p className="text-xs sm:text-sm text-slate-400 max-w-3xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-psyco-coolGrey max-w-3xl leading-relaxed">
             {description}
           </p>
         )}

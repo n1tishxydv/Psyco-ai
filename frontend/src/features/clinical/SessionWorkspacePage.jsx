@@ -27,6 +27,7 @@ import {
   Mic,
   Upload,
   Sparkles,
+  AlertTriangle,
 } from 'lucide-react';
 import { LiveTranscriptionWidget } from '../transcription/LiveTranscriptionWidget';
 import { GoogleMeetImportWidget } from '../transcription/GoogleMeetImportWidget';
@@ -573,6 +574,24 @@ export function SessionWorkspacePage() {
                   ))}
                 </div>
               </div>
+
+              {/* Explicit Draft & Clinician Approval Distinction (Req 9.5) */}
+              {noteStatus !== 'finalized' && (
+                <div className="p-3.5 rounded-xl border border-amber-700/60 bg-amber-950/20 text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                    <div>
+                      <span className="font-bold tracking-wide text-amber-300">DRAFT — REQUIRES CLINICIAN APPROVAL</span>
+                      <p className="text-[11px] text-amber-200/80 mt-0.5">
+                        This clinical note is an unfinalized working draft. The treating clinician maintains full responsibility for editing, verifying, and signing before final inclusion in patient chart.
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="amber" size="sm" className="shrink-0 self-start sm:self-auto font-mono">
+                    UNFINALIZED DRAFT
+                  </Badge>
+                </div>
+              )}
 
               {/* Dynamic Note Fields based on Format */}
               <div className="space-y-4">

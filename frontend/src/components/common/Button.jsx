@@ -16,19 +16,19 @@ export function Button({
   ...props
 }) {
   const baseStyles =
-    'relative inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 select-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-softTeal focus-visible:ring-offset-2 focus-visible:ring-offset-midnightNavy active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none';
+    'relative inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150 select-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-psyco-softGrey/70 focus-visible:ring-offset-2 focus-visible:ring-offset-psyco-deepNavy active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none';
 
   const variants = {
     primary:
-      'bg-deepJade hover:bg-opacity-90 text-primaryText shadow-sm hover:shadow-md border border-deepJade/40',
+      'bg-psyco-softGrey hover:bg-white text-psyco-deepNavy font-semibold shadow-sm hover:shadow-md border border-psyco-softGrey active:bg-psyco-softGrey/90',
     secondary:
-      'bg-elevatedSlate hover:bg-slate-700/60 text-primaryText border border-slate-700',
+      'bg-psyco-slate hover:bg-psyco-steel/50 text-psyco-softGrey border border-psyco-steel shadow-sm',
     outline:
-      'bg-transparent hover:bg-elevatedSlate/40 text-softTeal border border-softTeal/40 hover:border-softTeal',
+      'bg-transparent hover:bg-psyco-slate/50 text-psyco-softGrey border border-psyco-steel hover:border-psyco-coolGrey',
     ghost:
-      'bg-transparent hover:bg-elevatedSlate/50 text-secondaryText hover:text-primaryText',
+      'bg-transparent hover:bg-psyco-slate/40 text-psyco-coolGrey hover:text-psyco-softGrey',
     danger:
-      'bg-mutedCoral/20 hover:bg-mutedCoral/30 text-mutedCoral border border-mutedCoral/40 hover:border-mutedCoral',
+      'bg-red-950/40 hover:bg-red-900/50 text-red-300 border border-red-700/60',
   };
 
   const sizes = {

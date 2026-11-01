@@ -62,7 +62,7 @@ export function AppointmentCard({
   }
 
   return (
-    <Card className={`border-slate-800 bg-deepBlueGray/80 hover:border-slate-700/80 transition-all ${className}`}>
+    <Card className={`border-psyco-steel/70 bg-psyco-slate hover:border-psyco-coolGrey/50 transition-all ${className}`}>
       <CardContent className="p-5 space-y-4">
         {/* Top: Clinician Info & Status */}
         <div className="flex items-start justify-between gap-3">
@@ -70,13 +70,13 @@ export function AppointmentCard({
             <InitialsAvatar
               name={psychologistName || 'Clinical Psychologist'}
               size="md"
-              className="border border-slate-700"
+              className="border border-psyco-steel"
             />
             <div>
-              <h4 className="text-sm font-semibold text-slate-100">
+              <h4 className="text-sm font-semibold text-psyco-softGrey">
                 {psychologistName || 'Clinical Psychologist'}
               </h4>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-psyco-coolGrey">
                 {psychologistLicense ? `Lic: ${psychologistLicense}` : 'Licensed Clinical Care'}
               </p>
             </div>
@@ -86,14 +86,14 @@ export function AppointmentCard({
         </div>
 
         {/* Middle: Details Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-800/80 text-xs text-slate-300">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-psyco-steel/50 text-xs text-psyco-softGrey">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-softTeal shrink-0" />
+            <Calendar className="w-4 h-4 text-psyco-softGrey shrink-0" />
             <span>{displayDate || 'Date to be scheduled'}</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-softTeal shrink-0" />
+            <Clock className="w-4 h-4 text-psyco-softGrey shrink-0" />
             <span>
               {startTime ? `${startTime} - ${endTime || 'Session'}` : 'Time to be scheduled'}
             </span>
@@ -101,9 +101,9 @@ export function AppointmentCard({
 
           <div className="flex items-center gap-2 sm:col-span-2">
             {isOnline ? (
-              <Video className="w-4 h-4 text-softTeal shrink-0" />
+              <Video className="w-4 h-4 text-psyco-softGrey shrink-0" />
             ) : (
-              <MapPin className="w-4 h-4 text-softTeal shrink-0" />
+              <MapPin className="w-4 h-4 text-psyco-softGrey shrink-0" />
             )}
             <span className="truncate">
               {isOnline
@@ -113,8 +113,8 @@ export function AppointmentCard({
           </div>
 
           {reason && (
-            <div className="flex items-start gap-2 sm:col-span-2 pt-1 text-slate-400">
-              <FileText className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 sm:col-span-2 pt-1 text-psyco-coolGrey">
+              <FileText className="w-4 h-4 text-psyco-steel shrink-0 mt-0.5" />
               <span className="line-clamp-2 italic">“{reason}”</span>
             </div>
           )}
@@ -122,8 +122,8 @@ export function AppointmentCard({
 
         {/* Telehealth Link if Confirmed */}
         {isOnline && isConfirmed && meetingLink && (
-          <div className="p-3 rounded-xl bg-softTeal/10 border border-softTeal/20 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-xs font-medium text-softTeal truncate">
+          <div className="p-3 rounded-xl bg-psyco-darkNavy border border-psyco-steel flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs font-medium text-psyco-softGrey truncate">
               <Video className="w-4 h-4 shrink-0" />
               <span className="truncate">Google Meet Room Ready</span>
             </div>
@@ -131,7 +131,7 @@ export function AppointmentCard({
               href={meetingLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-softTeal text-slate-950 text-xs font-semibold hover:bg-softTeal/90 transition-colors shrink-0"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-psyco-softGrey text-psyco-deepNavy text-xs font-semibold hover:bg-white transition-colors shrink-0"
             >
               <span>Join Call</span>
               <ExternalLink className="w-3.5 h-3.5" />

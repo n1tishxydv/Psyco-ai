@@ -35,7 +35,7 @@ export function PsychologistCard({ psychologist, onSelectProfile, className = ''
   const isInPerson = offeredModes === 'in_person' || offeredModes === 'both';
 
   return (
-    <Card className={`border-slate-800 bg-deepBlueGray/80 hover:border-softTeal/40 hover:shadow-lg transition-all flex flex-col justify-between ${className}`}>
+    <Card className={`border-psyco-steel/70 bg-psyco-slate hover:border-psyco-coolGrey/60 hover:shadow-lg transition-all flex flex-col justify-between ${className}`}>
       <CardContent className="p-6 space-y-4 flex-1 flex flex-col justify-between">
         <div className="space-y-4">
           {/* Header & Verification */}
@@ -43,25 +43,25 @@ export function PsychologistCard({ psychologist, onSelectProfile, className = ''
             <InitialsAvatar
               name={fullName}
               size="lg"
-              className="rounded-2xl border-2 border-slate-700 shadow-sm shrink-0"
+              className="rounded-2xl border-2 border-psyco-steel shadow-sm shrink-0"
             />
             <div className="space-y-1 flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-base sm:text-lg font-bold text-slate-100 truncate">
+                <h3 className="text-base sm:text-lg font-bold text-psyco-softGrey truncate">
                   {fullName}
                 </h3>
                 <Badge variant="teal" size="sm" className="shrink-0 flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-softTeal" />
+                  <ShieldCheck className="w-3 h-3 text-psyco-softGrey" />
                   <span>Verified</span>
                 </Badge>
               </div>
 
-              <p className="text-xs text-softTeal font-medium">
+              <p className="text-xs text-psyco-coolGrey font-medium">
                 {licenseNumber ? `License: ${licenseNumber}` : 'Licensed Clinical Psychologist'}
               </p>
 
               {qualifications && qualifications.length > 0 && (
-                <p className="text-[11px] text-slate-400 truncate">
+                <p className="text-[11px] text-psyco-coolGrey/80 truncate">
                   {qualifications.join(' • ')}
                 </p>
               )}
@@ -70,7 +70,7 @@ export function PsychologistCard({ psychologist, onSelectProfile, className = ''
 
           {/* Bio Snippet */}
           {bio && (
-            <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed">
+            <p className="text-xs text-psyco-softGrey line-clamp-3 leading-relaxed">
               {bio}
             </p>
           )}
@@ -78,20 +78,20 @@ export function PsychologistCard({ psychologist, onSelectProfile, className = ''
           {/* Specializations Tags */}
           {specializations && specializations.length > 0 && (
             <div className="space-y-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-psyco-coolGrey">
                 Clinical Focus & Methods
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {specializations.slice(0, 4).map((spec, i) => (
                   <span
                     key={i}
-                    className="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/60"
+                    className="text-[11px] px-2 py-0.5 rounded-md bg-psyco-darkNavy text-psyco-softGrey border border-psyco-steel/70"
                   >
                     {spec}
                   </span>
                 ))}
                 {specializations.length > 4 && (
-                  <span className="text-[11px] px-1.5 py-0.5 text-slate-400">
+                  <span className="text-[11px] px-1.5 py-0.5 text-psyco-coolGrey">
                     +{specializations.length - 4} more
                   </span>
                 )}
@@ -100,14 +100,14 @@ export function PsychologistCard({ psychologist, onSelectProfile, className = ''
           )}
 
           {/* Consultation Modes & Languages */}
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-psyco-steel/50 text-[11px] text-psyco-coolGrey">
             <div className="flex items-center gap-1.5 truncate">
               {offeredModes === 'online' ? (
-                <Video className="w-3.5 h-3.5 text-softTeal shrink-0" />
+                <Video className="w-3.5 h-3.5 text-psyco-softGrey shrink-0" />
               ) : offeredModes === 'in_person' ? (
-                <MapPin className="w-3.5 h-3.5 text-softTeal shrink-0" />
+                <MapPin className="w-3.5 h-3.5 text-psyco-softGrey shrink-0" />
               ) : (
-                <span className="flex items-center gap-1 text-softTeal">
+                <span className="flex items-center gap-1 text-psyco-softGrey">
                   <Video className="w-3.5 h-3.5 shrink-0" />
                   <MapPin className="w-3.5 h-3.5 shrink-0" />
                 </span>
@@ -122,15 +122,15 @@ export function PsychologistCard({ psychologist, onSelectProfile, className = ''
             </div>
 
             <div className="flex items-center gap-1.5 truncate">
-              <Languages className="w-3.5 h-3.5 text-softTeal shrink-0" />
+              <Languages className="w-3.5 h-3.5 text-psyco-softGrey shrink-0" />
               <span className="truncate">
                 {languages && languages.length > 0 ? languages.join(', ') : 'English'}
               </span>
             </div>
 
             {clinicAddress?.city && (
-              <div className="col-span-2 flex items-center gap-1.5 text-[11px] text-slate-400">
-                <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+              <div className="col-span-2 flex items-center gap-1.5 text-[11px] text-psyco-coolGrey">
+                <MapPin className="w-3.5 h-3.5 text-psyco-steel shrink-0" />
                 <span>Clinic: {clinicAddress.city}, {clinicAddress.state}</span>
               </div>
             )}

@@ -5,7 +5,7 @@ import { ErrorBoundary } from '../common/ErrorBoundary';
 
 export function AppShell({ children }) {
   return (
-    <div className="min-h-screen flex flex-col bg-midnightNavy text-primaryText transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-psyco-deepNavy text-psyco-softGrey">
       <Navbar />
       <main className="flex-1 flex flex-col">
         <ErrorBoundary>

@@ -25,15 +25,15 @@ export function Logo({
       >
         <defs>
           <linearGradient id="psycoGradient" x1="4" y1="4" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#79CBB8" />
-            <stop offset="1" stopColor="#2D8276" />
+            <stop stopColor="#CCD0CF" />
+            <stop offset="1" stopColor="#4A5C6A" />
           </linearGradient>
         </defs>
 
         {/* Primary therapeutic speech bubble */}
         <path
           d="M7 13C7 9.13401 10.134 6 14 6H20C23.866 6 27 9.13401 27 13V17C27 20.866 23.866 24 20 24H15L9 29V23.5C7.75545 22.3486 7 20.7327 7 19V13Z"
-          fill="#172536"
+          fill="#11212D"
           stroke="url(#psycoGradient)"
           strokeWidth="2"
           strokeLinejoin="round"
@@ -42,26 +42,26 @@ export function Logo({
         {/* Continuous human-centered neural / empathy curve */}
         <path
           d="M12 15.5C14.5 11 18 20 21.5 14.5C22.8 12.5 24.5 14 25 15.5"
-          stroke="#79CBB8"
+          stroke="#CCD0CF"
           strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
 
         {/* Empathy node */}
-        <circle cx="18" cy="15.8" r="1.6" fill="#79CBB8" />
+        <circle cx="18" cy="15.8" r="1.6" fill="#CCD0CF" />
       </svg>
     </div>
   );
 
   const textElement = (
     <div className="flex items-center gap-1.5 font-sans tracking-tight select-none">
-      <span className={cn('font-bold text-primaryText dark:text-primaryText light:text-light-textPrimary', currentSize.text)}>
+      <span className={cn('font-bold text-psyco-softGrey', currentSize.text)}>
         Psyco
       </span>
       <span
         className={cn(
-          'font-semibold uppercase tracking-wider rounded-md border border-softTeal/40 bg-softTeal/10 text-softTeal',
+          'font-semibold uppercase tracking-wider rounded-md border border-psyco-steel bg-psyco-slate text-psyco-softGrey',
           currentSize.badge
         )}
       >

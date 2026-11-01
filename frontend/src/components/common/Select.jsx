@@ -22,9 +22,9 @@ export const Select = forwardRef(function Select(
       {label && (
         <label
           htmlFor={selectId}
-          className="block text-xs font-medium tracking-wide uppercase text-secondaryText"
+          className="block text-xs font-medium tracking-wide uppercase text-psyco-coolGrey"
         >
-          {label} {required && <span className="text-mutedCoral">*</span>}
+          {label} {required && <span className="text-red-400">*</span>}
         </label>
       )}
 
@@ -35,21 +35,21 @@ export const Select = forwardRef(function Select(
           disabled={disabled}
           required={required}
           className={cn(
-            'w-full bg-deepBlueGray/70 border rounded-lg px-3.5 py-2 text-sm text-primaryText transition-colors duration-150 appearance-none',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-softTeal focus-visible:border-softTeal',
+            'w-full bg-psyco-darkNavy border rounded-xl px-3.5 py-2 text-sm text-psyco-softGrey transition-colors duration-150 appearance-none',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-psyco-softGrey/50 focus-visible:border-psyco-coolGrey',
             'disabled:opacity-50 disabled:cursor-not-allowed',
-            error ? 'border-mutedCoral focus-visible:ring-mutedCoral' : 'border-slate-700/80 hover:border-slate-600',
+            error ? 'border-red-500/80 focus-visible:ring-red-400' : 'border-psyco-steel/80 hover:border-psyco-coolGrey/50',
             className
           )}
           {...props}
         >
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value} className="bg-deepBlueGray text-primaryText">
+            <option key={opt.value} value={opt.value} className="bg-psyco-darkNavy text-psyco-softGrey">
               {opt.label}
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-secondaryText">
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-psyco-coolGrey">
           <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
             <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
           </svg>
@@ -57,9 +57,9 @@ export const Select = forwardRef(function Select(
       </div>
 
       {error ? (
-        <p className="text-xs text-mutedCoral">{error}</p>
+        <p className="text-xs text-red-400">{error}</p>
       ) : helperText ? (
-        <p className="text-xs text-secondaryText">{helperText}</p>
+        <p className="text-xs text-psyco-coolGrey">{helperText}</p>
       ) : null}
     </div>
   );

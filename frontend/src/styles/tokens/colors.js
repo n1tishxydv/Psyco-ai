@@ -1,27 +1,26 @@
 export const colors = {
-  // Brand Core
-  midnightNavy: '#111B2B',
-  deepBlueGray: '#172536',
-  elevatedSlate: '#1D3042',
-  softTeal: '#79CBB8',
-  deepJade: '#2D8276',
+  // Official Psyco AI Palette
+  deepNavy: '#06141B',
+  darkNavy: '#11212D',
+  slate: '#253745',
+  steel: '#4A5C6A',
+  coolGrey: '#9BA8AB',
+  softGrey: '#CCD0CF',
+
+  // Legacy mappings for backwards compatibility
+  midnightNavy: '#06141B',
+  deepBlueGray: '#11212D',
+  elevatedSlate: '#253745',
+  borderSteel: '#4A5C6A',
+  softTeal: '#CCD0CF',
+  deepJade: '#253745',
 
   // Typography
-  primaryText: '#F4F7F6',
-  secondaryText: '#A7B5BE',
+  primaryText: '#CCD0CF',
+  secondaryText: '#9BA8AB',
 
-  // Status & Alerts
-  mutedAmber: '#E6B96C',
-  calmGreen: '#65B891',
-  mutedCoral: '#D87575',
-
-  // Light Mode Mappings
-  light: {
-    background: '#F8FAFC',
-    card: '#FFFFFF',
-    elevated: '#F1F5F9',
-    border: '#E2E8F0',
-    primaryText: '#0F172A',
-    secondaryText: '#475569',
-  },
+  // Healthcare Status Semantics
+  calmGreen: '#4E9A7E',
+  mutedAmber: '#C48B3F',
+  mutedCoral: '#B54848',
 };

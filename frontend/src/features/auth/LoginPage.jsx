@@ -119,8 +119,8 @@ export function LoginPage() {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
           <Badge variant="teal" size="sm">Secure Sign In</Badge>
-          <h1 className="text-3xl font-bold tracking-tight text-primaryText">Welcome to Psyco AI</h1>
-          <p className="text-sm text-secondaryText">
+          <h1 className="text-3xl font-bold tracking-tight text-psyco-softGrey">Welcome to Psyco AI</h1>
+          <p className="text-sm text-psyco-coolGrey">
             Sign in to access your clinical practice or patient care portal.
           </p>
         </div>
@@ -137,14 +137,14 @@ export function LoginPage() {
           <AlertBanner type="error" title="Authentication Error" message={errorMsg} />
         )}
 
-        <Card className="shadow-xl border-slate-700/60 bg-slate-900/80 backdrop-blur-sm">
+        <Card className="shadow-xl border-psyco-steel/70 bg-psyco-slate">
           <CardContent className="pt-6 space-y-5">
             {/* Google Sign In Button */}
             <Button
               type="button"
               variant="outline"
               size="md"
-              className="w-full flex items-center justify-center gap-3 border-slate-700 hover:bg-slate-800 text-slate-200"
+              className="w-full flex items-center justify-center gap-3 border-psyco-steel hover:bg-psyco-darkNavy text-psyco-softGrey"
               onClick={handleGoogleLogin}
               disabled={googleLoading || loading}
             >
@@ -174,8 +174,8 @@ export function LoginPage() {
             </Button>
 
             <div className="relative flex items-center justify-center">
-              <div className="border-t border-slate-700/80 w-full" />
-              <span className="bg-slate-900 px-3 text-xs text-slate-400 uppercase tracking-wider">
+              <div className="border-t border-psyco-steel/50 w-full" />
+              <span className="bg-psyco-slate px-3 text-xs text-psyco-coolGrey uppercase tracking-wider">
                 Or with email
               </span>
             </div>
@@ -194,7 +194,7 @@ export function LoginPage() {
 
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-slate-300">Password</label>
+                  <label className="text-xs font-medium text-psyco-coolGrey">Password</label>
                   <button
                     type="button"
                     onClick={() => {
@@ -203,7 +203,7 @@ export function LoginPage() {
                       setResetError(null);
                       setShowForgotModal(true);
                     }}
-                    className="text-xs text-teal-400 hover:text-teal-300 transition-colors"
+                    className="text-xs text-psyco-softGrey hover:underline transition-colors"
                   >
                     Forgot Password?
                   </button>

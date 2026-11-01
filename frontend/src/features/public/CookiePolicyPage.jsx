@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { LegalDocumentLayout } from './components/LegalDocumentLayout';
 import { contactConfig } from '../../config/contactConfig';
 import { RefreshCw, ShieldCheck, Database, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -82,13 +82,6 @@ export function CookiePolicyPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800 text-slate-400">
-              <tr>
-                <td className="p-3 font-mono text-slate-200">psyco_theme</td>
-                <td className="p-3">localStorage</td>
-                <td className="p-3"><span className="text-calmGreen font-semibold">Functional</span></td>
-                <td className="p-3">Persistent</td>
-                <td className="p-3">Stores user preference for dark or light theme mode.</td>
-              </tr>
               <tr>
                 <td className="p-3 font-mono text-slate-200">firebase:authUser:[apiKey]</td>
                 <td className="p-3">IndexedDB / LocalStorage</td>

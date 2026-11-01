@@ -239,20 +239,20 @@ export function OnboardingPage() {
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-8">
       {/* Top Header */}
       <div className="text-center space-y-2">
-        <Badge variant="teal" size="sm" className="inline-flex items-center gap-1">
-          <Sparkles className="w-3.5 h-3.5 text-softTeal" />
+        <Badge variant="default" size="sm" className="inline-flex items-center gap-1">
+          <Sparkles className="w-3.5 h-3.5 text-psyco-softGrey" />
           <span>Psyco AI Patient Workspace</span>
         </Badge>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-100">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-psyco-softGrey">
           Complete Your Profile
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+        <p className="text-xs sm:text-sm text-psyco-coolGrey max-w-md mx-auto">
           Set up your confidential account to connect with licensed clinical psychologists and manage your care.
         </p>
       </div>
 
       {/* Role Toggle Tabs */}
-      <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-900 border border-slate-800 shadow-inner">
+      <div className="grid grid-cols-2 p-1 rounded-xl bg-psyco-darkNavy border border-psyco-steel/60 shadow-inner">
         <button
           type="button"
           onClick={() => {
@@ -261,11 +261,11 @@ export function OnboardingPage() {
           }}
           className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all ${
             role === 'patient'
-              ? 'bg-softTeal text-slate-950 shadow-md'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-psyco-slate text-psyco-softGrey border border-psyco-steel shadow-md'
+              : 'text-psyco-coolGrey hover:text-psyco-softGrey'
           }`}
         >
-          <User className="w-4 h-4" />
+          <User className="w-4 h-4 text-psyco-softGrey" />
           <span>I am a Patient</span>
         </button>
 
@@ -277,11 +277,11 @@ export function OnboardingPage() {
           }}
           className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all ${
             role === 'psychologist'
-              ? 'bg-softTeal text-slate-950 shadow-md'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-psyco-slate text-psyco-softGrey border border-psyco-steel shadow-md'
+              : 'text-psyco-coolGrey hover:text-psyco-softGrey'
           }`}
         >
-          <Stethoscope className="w-4 h-4" />
+          <Stethoscope className="w-4 h-4 text-psyco-softGrey" />
           <span>I am a Psychologist</span>
         </button>
       </div>
@@ -292,17 +292,17 @@ export function OnboardingPage() {
 
       {/* PATIENT MULTI-STEP FLOW */}
       {role === 'patient' ? (
-        <Card className="border-slate-800 bg-deepBlueGray/90 shadow-xl">
+        <Card className="border-psyco-steel/60 bg-psyco-darkNavy/90 shadow-xl">
           <CardContent className="p-6 sm:p-8 space-y-6">
             {/* Step Progress Bar */}
-            <div className="space-y-3 pb-4 border-b border-slate-800">
-              <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+            <div className="space-y-3 pb-4 border-b border-psyco-steel/50">
+              <div className="flex items-center justify-between text-xs text-psyco-coolGrey font-medium">
                 <span>Step {currentStep} of 5: {patientSteps[currentStep - 1].title}</span>
-                <span className="text-softTeal">{Math.round((currentStep / 5) * 100)}% Complete</span>
+                <span className="text-psyco-softGrey font-semibold">{Math.round((currentStep / 5) * 100)}% Complete</span>
               </div>
-              <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-psyco-slate rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-softTeal transition-all duration-300 rounded-full"
+                  className="h-full bg-psyco-softGrey transition-all duration-300 rounded-full"
                   style={{ width: `${(currentStep / 5) * 100}%` }}
                 />
               </div>
@@ -312,10 +312,10 @@ export function OnboardingPage() {
             {currentStep === 1 && (
               <div className="space-y-4 animate-fade-in">
                 <div className="space-y-1">
-                  <h3 className="text-base font-semibold text-slate-100">
+                  <h3 className="text-base font-semibold text-psyco-softGrey">
                     Welcome to Psyco AI
                   </h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-psyco-coolGrey leading-relaxed">
                     Verify your legal name and contact details for appointment booking and care records.
                   </p>
                 </div>
@@ -337,16 +337,16 @@ export function OnboardingPage() {
                   />
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                    <label className="block text-xs font-medium text-psyco-softGrey mb-1">
                       Registered Email
                     </label>
                     <input
                       type="text"
                       disabled
                       value={patientForm.email}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-400 cursor-not-allowed"
+                      className="w-full px-3 py-2 rounded-lg bg-psyco-deepNavy border border-psyco-steel/60 text-xs text-psyco-coolGrey cursor-not-allowed"
                     />
-                    <p className="text-[11px] text-slate-500 mt-1">
+                    <p className="text-[11px] text-psyco-coolGrey/80 mt-1">
                       Account email linked to your secure Firebase Authentication session.
                     </p>
                   </div>
@@ -365,10 +365,10 @@ export function OnboardingPage() {
             {currentStep === 2 && (
               <div className="space-y-4 animate-fade-in">
                 <div className="space-y-1">
-                  <h3 className="text-base font-semibold text-slate-100">
+                  <h3 className="text-base font-semibold text-psyco-softGrey">
                     Personal Demographics & Safety
                   </h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-psyco-coolGrey leading-relaxed">
                     This basic demographic information allows clinicians to tailor evidence-based therapeutic care.
                   </p>
                 </div>
@@ -413,9 +413,9 @@ export function OnboardingPage() {
                   </div>
 
                   {/* Emergency Contact */}
-                  <div className="sm:col-span-2 p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
-                      <Phone className="w-3.5 h-3.5 text-softTeal" />
+                  <div className="sm:col-span-2 p-4 rounded-xl bg-psyco-deepNavy border border-psyco-steel/60 space-y-3">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-psyco-softGrey">
+                      <Phone className="w-3.5 h-3.5 text-psyco-softGrey" />
                       <span>Emergency Point of Contact (Recommended)</span>
                     </div>
 
@@ -452,10 +452,10 @@ export function OnboardingPage() {
             {currentStep === 3 && (
               <div className="space-y-4 animate-fade-in">
                 <div className="space-y-1">
-                  <h3 className="text-base font-semibold text-slate-100">
+                  <h3 className="text-base font-semibold text-psyco-softGrey">
                     Consultation & Care Preferences
                   </h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-psyco-coolGrey leading-relaxed">
                     Set your preferred consultation format to quickly match with available psychologists.
                   </p>
                 </div>
@@ -484,12 +484,12 @@ export function OnboardingPage() {
                   />
 
                   {/* Informational Box */}
-                  <div className="p-4 rounded-xl bg-softTeal/5 border border-softTeal/20 space-y-1.5">
-                    <h4 className="text-xs font-semibold text-softTeal flex items-center gap-1.5">
-                      <HeartHandshake className="w-4 h-4" />
+                  <div className="p-4 rounded-xl bg-psyco-slate/50 border border-psyco-steel/60 space-y-1.5">
+                    <h4 className="text-xs font-semibold text-psyco-softGrey flex items-center gap-1.5">
+                      <HeartHandshake className="w-4 h-4 text-psyco-softGrey" />
                       <span>Next Step: Comprehensive Clinical Intake</span>
                     </h4>
-                    <p className="text-xs text-slate-300 leading-relaxed">
+                    <p className="text-xs text-psyco-coolGrey leading-relaxed">
                       Following profile completion, you will be invited to complete your confidential clinical intake form covering health background, presenting concerns, and lifestyle habits.
                     </p>
                   </div>
@@ -501,34 +501,34 @@ export function OnboardingPage() {
             {currentStep === 4 && (
               <div className="space-y-4 animate-fade-in">
                 <div className="space-y-1">
-                  <h3 className="text-base font-semibold text-slate-100">
+                  <h3 className="text-base font-semibold text-psyco-softGrey">
                     Privacy, Disclosures & Informed Consent
                   </h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-psyco-coolGrey leading-relaxed">
                     Please review and check each disclosure. In accordance with healthcare standards, consents are explicit and not preselected.
                   </p>
                 </div>
 
                 <div className="space-y-3 pt-2">
                   {/* Consent 1: Informed Consent */}
-                  <label className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 cursor-pointer transition-colors">
+                  <label className="flex items-start gap-3 p-3.5 rounded-xl bg-psyco-deepNavy border border-psyco-steel/60 hover:border-psyco-steel cursor-pointer transition-colors">
                     <input
                       type="checkbox"
                       checked={patientForm.consentTreatment}
                       onChange={(e) => setPatientForm({ ...patientForm, consentTreatment: e.target.checked })}
-                      className="mt-1 h-4 w-4 rounded border-slate-700 bg-slate-950 text-softTeal focus:ring-softTeal focus:ring-offset-midnightNavy"
+                      className="mt-1 h-4 w-4 rounded border-psyco-steel/80 bg-psyco-deepNavy text-psyco-softGrey focus:ring-psyco-steel focus:ring-offset-psyco-darkNavy"
                     />
                     <div className="space-y-0.5">
-                      <span className="text-xs font-semibold text-slate-100 block">
+                      <span className="text-xs font-semibold text-psyco-softGrey block">
                         Informed Consent for Psychotherapy & Clinical Consultations *
                       </span>
-                      <span className="text-[11px] text-slate-400 block leading-relaxed">
+                      <span className="text-[11px] text-psyco-coolGrey block leading-relaxed">
                         I understand that consultations are provided by licensed mental health professionals and that I have the right to discuss treatment plans, risks, and alternatives. (See{' '}
-                        <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-softTeal underline hover:text-teal-300">
+                        <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-psyco-softGrey underline hover:text-white">
                           Terms of Service
                         </a>{' '}
                         and{' '}
-                        <a href="/medical-disclaimer" target="_blank" rel="noopener noreferrer" className="text-softTeal underline hover:text-teal-300">
+                        <a href="/medical-disclaimer" target="_blank" rel="noopener noreferrer" className="text-psyco-softGrey underline hover:text-white">
                           Medical Disclaimer
                         </a>)
                       </span>
@@ -536,20 +536,20 @@ export function OnboardingPage() {
                   </label>
 
                   {/* Consent 2: AI Assistant Disclosure */}
-                  <label className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 cursor-pointer transition-colors">
+                  <label className="flex items-start gap-3 p-3.5 rounded-xl bg-psyco-deepNavy border border-psyco-steel/60 hover:border-psyco-steel cursor-pointer transition-colors">
                     <input
                       type="checkbox"
                       checked={patientForm.consentAiTransparency}
                       onChange={(e) => setPatientForm({ ...patientForm, consentAiTransparency: e.target.checked })}
-                      className="mt-1 h-4 w-4 rounded border-slate-700 bg-slate-950 text-softTeal focus:ring-softTeal focus:ring-offset-midnightNavy"
+                      className="mt-1 h-4 w-4 rounded border-psyco-steel/80 bg-psyco-deepNavy text-psyco-softGrey focus:ring-psyco-steel focus:ring-offset-psyco-darkNavy"
                     />
                     <div className="space-y-0.5">
-                      <span className="text-xs font-semibold text-slate-100 block">
+                      <span className="text-xs font-semibold text-psyco-softGrey block">
                         AI Clinical Copilot & Ephemeral Transcription Disclosure *
                       </span>
-                      <span className="text-[11px] text-slate-400 block leading-relaxed">
+                      <span className="text-[11px] text-psyco-coolGrey block leading-relaxed">
                         I acknowledge that Psyco AI provides ephemeral ambient documentation assistance. Audio is never persistently stored on disk; AI drafts are reviewed and approved exclusively by licensed clinicians. (See{' '}
-                        <a href="/ai-transparency" target="_blank" rel="noopener noreferrer" className="text-softTeal underline hover:text-teal-300">
+                        <a href="/ai-transparency" target="_blank" rel="noopener noreferrer" className="text-psyco-softGrey underline hover:text-white">
                           AI Transparency & Safety Policy
                         </a>)
                       </span>
@@ -557,24 +557,24 @@ export function OnboardingPage() {
                   </label>
 
                   {/* Consent 3: Privacy & Data Protection */}
-                  <label className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 cursor-pointer transition-colors">
+                  <label className="flex items-start gap-3 p-3.5 rounded-xl bg-psyco-deepNavy border border-psyco-steel/60 hover:border-psyco-steel cursor-pointer transition-colors">
                     <input
                       type="checkbox"
                       checked={patientForm.consentPrivacy}
                       onChange={(e) => setPatientForm({ ...patientForm, consentPrivacy: e.target.checked })}
-                      className="mt-1 h-4 w-4 rounded border-slate-700 bg-slate-950 text-softTeal focus:ring-softTeal focus:ring-offset-midnightNavy"
+                      className="mt-1 h-4 w-4 rounded border-psyco-steel/80 bg-psyco-deepNavy text-psyco-softGrey focus:ring-psyco-steel focus:ring-offset-psyco-darkNavy"
                     />
                     <div className="space-y-0.5">
-                      <span className="text-xs font-semibold text-slate-100 block">
+                      <span className="text-xs font-semibold text-psyco-softGrey block">
                         Data Confidentiality & Privacy Architecture Notice *
                       </span>
-                      <span className="text-[11px] text-slate-400 block leading-relaxed">
+                      <span className="text-[11px] text-psyco-coolGrey block leading-relaxed">
                         I agree to the Psyco AI Privacy Policy. Protected health data is encrypted and accessible only to me and my designated treating psychologist under strict ReBAC controls. (See{' '}
-                        <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-softTeal underline hover:text-teal-300">
+                        <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-psyco-softGrey underline hover:text-white">
                           Privacy Policy
                         </a>{' '}
                         and{' '}
-                        <a href="/data-privacy" target="_blank" rel="noopener noreferrer" className="text-softTeal underline hover:text-teal-300">
+                        <a href="/data-privacy" target="_blank" rel="noopener noreferrer" className="text-psyco-softGrey underline hover:text-white">
                           Data Privacy Architecture
                         </a>)
                       </span>
@@ -588,52 +588,52 @@ export function OnboardingPage() {
             {currentStep === 5 && (
               <div className="space-y-4 animate-fade-in">
                 <div className="space-y-1">
-                  <h3 className="text-base font-semibold text-slate-100">
+                  <h3 className="text-base font-semibold text-psyco-softGrey">
                     Review Your Information
                   </h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-psyco-coolGrey leading-relaxed">
                     Verify that your profile details are accurate before submitting.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3 text-xs">
-                  <div className="grid grid-cols-2 gap-2 pb-3 border-b border-slate-800">
+                <div className="p-4 rounded-xl bg-psyco-deepNavy border border-psyco-steel/60 space-y-3 text-xs">
+                  <div className="grid grid-cols-2 gap-2 pb-3 border-b border-psyco-steel/50">
                     <div>
-                      <span className="text-slate-500 block">Legal Name:</span>
-                      <span className="font-semibold text-slate-200">{patientForm.fullName}</span>
+                      <span className="text-psyco-coolGrey block">Legal Name:</span>
+                      <span className="font-semibold text-psyco-softGrey">{patientForm.fullName}</span>
                     </div>
                     <div>
-                      <span className="text-slate-500 block">Preferred Name:</span>
-                      <span className="font-semibold text-slate-200">{patientForm.preferredName || patientForm.fullName}</span>
+                      <span className="text-psyco-coolGrey block">Preferred Name:</span>
+                      <span className="font-semibold text-psyco-softGrey">{patientForm.preferredName || patientForm.fullName}</span>
                     </div>
                     <div>
-                      <span className="text-slate-500 block">Age:</span>
-                      <span className="font-semibold text-slate-200">{patientForm.age} years</span>
+                      <span className="text-psyco-coolGrey block">Age:</span>
+                      <span className="font-semibold text-psyco-softGrey">{patientForm.age} years</span>
                     </div>
                     <div>
-                      <span className="text-slate-500 block">Gender:</span>
-                      <span className="font-semibold text-slate-200 capitalize">{patientForm.gender.replace(/_/g, ' ')}</span>
+                      <span className="text-psyco-coolGrey block">Gender:</span>
+                      <span className="font-semibold text-psyco-softGrey capitalize">{patientForm.gender.replace(/_/g, ' ')}</span>
                     </div>
                     <div>
-                      <span className="text-slate-500 block">Phone:</span>
-                      <span className="font-semibold text-slate-200">{patientForm.phone || 'Not provided'}</span>
+                      <span className="text-psyco-coolGrey block">Phone:</span>
+                      <span className="font-semibold text-psyco-softGrey">{patientForm.phone || 'Not provided'}</span>
                     </div>
                     <div>
-                      <span className="text-slate-500 block">Timezone:</span>
-                      <span className="font-semibold text-slate-200">{patientForm.timezone}</span>
+                      <span className="text-psyco-coolGrey block">Timezone:</span>
+                      <span className="font-semibold text-psyco-softGrey">{patientForm.timezone}</span>
                     </div>
                   </div>
 
                   {patientForm.emergencyContactName && (
-                    <div className="pb-3 border-b border-slate-800">
-                      <span className="text-slate-500 block">Emergency Contact:</span>
-                      <span className="font-semibold text-slate-200">
+                    <div className="pb-3 border-b border-psyco-steel/50">
+                      <span className="text-psyco-coolGrey block">Emergency Contact:</span>
+                      <span className="font-semibold text-psyco-softGrey">
                         {patientForm.emergencyContactName} ({patientForm.emergencyContactRelationship || 'Contact'}) — {patientForm.emergencyContactPhone}
                       </span>
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 text-calmGreen">
+                  <div className="flex items-center gap-2 text-emerald-400">
                     <CheckCircle2 className="w-4 h-4 shrink-0" />
                     <span>All informed consents and privacy agreements verified and agreed.</span>
                   </div>
@@ -642,7 +642,7 @@ export function OnboardingPage() {
             )}
 
             {/* Stepper Navigation Buttons */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+            <div className="flex items-center justify-between pt-4 border-t border-psyco-steel/50">
               {currentStep > 1 ? (
                 <Button
                   type="button"
@@ -650,7 +650,7 @@ export function OnboardingPage() {
                   size="sm"
                   onClick={handlePrevStep}
                   disabled={loading}
-                  className="flex items-center gap-1.5 text-slate-300"
+                  className="flex items-center gap-1.5 text-psyco-softGrey hover:bg-psyco-slate"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>Previous</span>
@@ -689,13 +689,13 @@ export function OnboardingPage() {
         </Card>
       ) : (
         /* PSYCHOLOGIST ONBOARDING (Preserved) */
-        <Card className="border-slate-800 bg-deepBlueGray/90 shadow-xl">
+        <Card className="border-psyco-steel/60 bg-psyco-darkNavy/90 shadow-xl">
           <CardContent className="p-6 sm:p-8 space-y-6">
             <div className="space-y-1">
-              <h3 className="text-base font-semibold text-slate-100">
+              <h3 className="text-base font-semibold text-psyco-softGrey">
                 Psychologist Professional Credentials
               </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-psyco-coolGrey leading-relaxed">
                 Provide your clinical credentials for verification by the medical director.
               </p>
             </div>
@@ -752,9 +752,9 @@ export function OnboardingPage() {
                 />
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-400 space-y-1">
-                <p className="font-semibold text-slate-200 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-softTeal" />
+              <div className="p-4 rounded-xl bg-psyco-deepNavy border border-psyco-steel/60 text-xs text-psyco-coolGrey space-y-1">
+                <p className="font-semibold text-psyco-softGrey flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-psyco-softGrey" />
                   <span>Credential Verification Policy</span>
                 </p>
                 <p>
@@ -762,7 +762,7 @@ export function OnboardingPage() {
                 </p>
               </div>
 
-              <div className="pt-4 border-t border-slate-800 flex justify-end">
+              <div className="pt-4 border-t border-psyco-steel/50 flex justify-end">
                 <Button
                   type="submit"
                   variant="primary"

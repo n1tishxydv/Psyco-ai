@@ -6,6 +6,7 @@ import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
 import { EmptyState } from '../../components/common/EmptyState';
 import { InitialsAvatar } from '../../components/common/InitialsAvatar';
+import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import {
   FileText,
   Printer,
@@ -19,35 +20,38 @@ import {
   Download,
   CheckCircle2,
   Stethoscope,
-  Info
+  Info,
+  CalendarX,
+  RotateCcw,
+  Layers,
 } from 'lucide-react';
 
 const REPORT_TYPES = [
   {
     id: 'session_summary',
     name: 'Session Summary',
-    description: 'Synthesizes documented clinical notes, interventions, and patient progress from recent sessions.'
+    description: 'Synthesizes documented clinical notes, interventions, and patient progress from recent sessions.',
   },
   {
     id: 'treatment_summary',
     name: 'Treatment Plan Summary',
-    description: 'Summarizes active clinical goals, measurable objectives, target dates, and review milestones.'
+    description: 'Summarizes active clinical goals, measurable objectives, target dates, and review milestones.',
   },
   {
     id: 'progress_report',
     name: 'Comprehensive Progress Report',
-    description: 'Detailed clinical progress across attendance, goal completion, and therapeutic recommendations.'
+    description: 'Detailed clinical progress across attendance, goal completion, and therapeutic recommendations.',
   },
   {
     id: 'discharge_summary',
     name: 'Discharge Summary',
-    description: 'Final clinical synopsis detailing presenting problems, interventions delivered, outcome status, and follow-up guidance.'
+    description: 'Final clinical synopsis detailing presenting problems, interventions delivered, outcome status, and follow-up guidance.',
   },
   {
     id: 'appointment_history',
     name: 'Consultation & Attendance Log',
-    description: 'Chronological consultation history, modes (telehealth/in-person), and attendance verification.'
-  }
+    description: 'Chronological consultation history, modes (telehealth/in-person), and attendance verification.',
+  },
 ];
 
 export function ReportsPage() {
@@ -65,6 +69,7 @@ export function ReportsPage() {
   // Generation State
   const [generating, setGenerating] = useState(false);
   const [generatedReport, setGeneratedReport] = useState(null);
+  const [isEmptyResult, setIsEmptyResult] = useState(false);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
 
@@ -116,7 +121,7 @@ export function ReportsPage() {
   }, []);
 
   const handleGenerateReport = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!selectedPatientId) {
       setError('Please select a patient.');
       return;
@@ -125,26 +130,69 @@ export function ReportsPage() {
     try {
       setGenerating(true);
       setError(null);
+      setIsEmptyResult(false);
       setGeneratedReport(null);
 
       const payload = {
         reportType: selectedReportType,
         dateRange: {
           startDate: startDate || undefined,
-          endDate: endDate || undefined
+          endDate: endDate || undefined,
         },
-        additionalNotes: additionalNotes.trim() || undefined
+        additionalNotes: additionalNotes.trim() || undefined,
       };
 
       const res = await clinicalService.generateReport(selectedPatientId, payload);
       const normalizedReport = res?.data?.report || res?.report || res?.data || res;
-      setGeneratedReport(normalizedReport);
+
+      // Detect empty result specifically when filtering by date range
+      const sections = normalizedReport?.sections || [];
+      const hasEmptySections = (
+        (Boolean(startDate) || Boolean(endDate)) &&
+        (
+          sections.length === 0 ||
+          sections.every((s) => {
+            const c = (s?.content || '').toLowerCase();
+            return (
+              !c ||
+              c.includes('no session records found') ||
+              c.includes('total sessions completed: 0') ||
+              c === 'none recorded.' ||
+              c === 'no active treatment plan found.'
+            );
+          })
+        )
+      );
+
+      if (hasEmptySections) {
+        setIsEmptyResult(true);
+        setGeneratedReport(null);
+      } else {
+        setIsEmptyResult(false);
+        setGeneratedReport(normalizedReport);
+      }
     } catch (err) {
       console.error('Failed to generate report:', err);
       setError(err?.message || 'Error generating clinical report from records.');
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleResetFilters = () => {
+    setStartDate('');
+    setEndDate('');
+    setIsEmptyResult(false);
+    setError(null);
+  };
+
+  const handleExpandDateRange = () => {
+    // Expand to prior 12 months
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 1);
+    setStartDate(d.toISOString().split('T')[0]);
+    setEndDate(new Date().toISOString().split('T')[0]);
+    setIsEmptyResult(false);
   };
 
   const handlePrint = () => {
@@ -154,9 +202,10 @@ export function ReportsPage() {
   const handleCopyText = () => {
     if (!generatedReport) return;
     const sectionsText = Array.isArray(generatedReport.sections)
-      ? generatedReport.sections.map(s => `${(s.title || '').toUpperCase()}:\n${s.content || ''}`).join('\n\n')
+      ? generatedReport.sections.map((s) => `${(s.title || '').toUpperCase()}:\n${s.content || ''}`).join('\n\n')
       : '';
-    const text = `PSYCO AI CLINICAL REPORT: ${generatedReport.title || 'Summary'}\n` +
+    const text =
+      `PSYCO AI CLINICAL REPORT: ${generatedReport.title || 'Summary'}\n` +
       `Date: ${new Date(generatedReport.generatedAt || Date.now()).toLocaleDateString()}\n` +
       `Patient ID: ${generatedReport.patientId || 'N/A'}\n` +
       `Clinician: ${generatedReport.psychologistName || user?.fullName || 'Psychologist'}\n\n` +
@@ -169,9 +218,10 @@ export function ReportsPage() {
   };
 
   const safePatients = Array.isArray(patients) ? patients : [];
-  const selectedPatient = safePatients.find(
-    p => (p?.patientId && p.patientId === selectedPatientId) || (p?.id && p.id === selectedPatientId)
-  ) || null;
+  const selectedPatient =
+    safePatients.find(
+      (p) => (p?.patientId && p.patientId === selectedPatientId) || (p?.id && p.id === selectedPatientId)
+    ) || null;
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -192,48 +242,58 @@ export function ReportsPage() {
         </div>
       </div>
 
+      {/* Error with Retry Action */}
       {error && (
-        <div className="p-4 rounded-xl bg-red-950/40 border border-red-500/30 text-red-200 text-xs flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-          <span>{error}</span>
+        <div className="p-4 rounded-xl bg-red-950/40 border border-red-500/30 text-red-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleGenerateReport}
+            className="text-red-200 border-red-500/40 hover:bg-red-500/20 text-xs self-start sm:self-auto shrink-0 flex items-center gap-1.5"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Retry Report Generation
+          </Button>
         </div>
       )}
 
-      {/* Main Grid: Generator Controls + Report Preview */}
+      {/* Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Form Controls */}
-        <div className="lg:col-span-5 space-y-6 print:hidden">
-          <Card className="border-slate-800 bg-slate-900 shadow-md">
-            <CardHeader className="border-b border-slate-800 pb-4">
-              <h2 className="text-base font-semibold text-slate-100 flex items-center gap-2">
-                <Stethoscope className="w-4 h-4 text-teal-400" />
-                Report Parameters
+        {/* Left Column: Report Configuration Form */}
+        <div className="lg:col-span-5 space-y-6">
+          <Card className="bg-slate-900 border-slate-800 shadow-md">
+            <CardHeader className="pb-3 border-b border-slate-800">
+              <h2 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-teal-400" />
+                Report Scope & Parameters
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Select patient, report scope, and optional period constraints.
-              </p>
             </CardHeader>
-            <CardContent className="p-6">
-              <form onSubmit={handleGenerateReport} className="space-y-5">
+            <CardContent className="pt-4">
+              <form onSubmit={handleGenerateReport} className="space-y-4">
                 {/* Patient Selector */}
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">
                     Select Patient <span className="text-teal-400">*</span>
                   </label>
                   {loadingPatients ? (
-                    <div className="py-2 text-xs text-slate-500 flex items-center gap-2">
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-teal-400" />
-                      Loading assigned roster...
-                    </div>
+                    <div className="h-9 bg-slate-800 animate-pulse rounded-lg" />
                   ) : safePatients.length === 0 ? (
-                    <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60 text-xs text-slate-400">
-                      No patients assigned yet. Consultations must be booked first.
+                    <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-400">
+                      No assigned patients found in your clinical directory.
                     </div>
                   ) : (
                     <select
                       value={selectedPatientId}
-                      onChange={(e) => setSelectedPatientId(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-teal-400"
+                      onChange={(e) => {
+                        setSelectedPatientId(e.target.value);
+                        setGeneratedReport(null);
+                        setIsEmptyResult(false);
+                      }}
+                      className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-teal-400"
                     >
                       {safePatients.map((p) => {
                         const pid = p?.patientId || p?.id;
@@ -269,7 +329,10 @@ export function ReportsPage() {
                             name="reportType"
                             value={type.id}
                             checked={isSelected}
-                            onChange={() => setSelectedReportType(type.id)}
+                            onChange={() => {
+                              setSelectedReportType(type.id);
+                              setIsEmptyResult(false);
+                            }}
                             className="mt-0.5 text-teal-500 focus:ring-teal-400"
                           />
                           <div>
@@ -295,9 +358,13 @@ export function ReportsPage() {
                     <input
                       type="date"
                       value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
+                      onChange={(e) => {
+                        setStartDate(e.target.value);
+                        setIsEmptyResult(false);
+                      }}
                       className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-teal-400"
-                    />
+                    >
+                    </input>
                   </div>
                   <div>
                     <label className="block text-[11px] font-medium text-slate-400 mb-1">
@@ -306,11 +373,27 @@ export function ReportsPage() {
                     <input
                       type="date"
                       value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
+                      onChange={(e) => {
+                        setEndDate(e.target.value);
+                        setIsEmptyResult(false);
+                      }}
                       className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-teal-400"
-                    />
+                    >
+                    </input>
                   </div>
                 </div>
+
+                {(startDate || endDate) && (
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleResetFilters}
+                      className="text-[11px] text-slate-400 hover:text-teal-300 flex items-center gap-1"
+                    >
+                      <RotateCcw className="w-3 h-3" /> Clear date filter
+                    </button>
+                  </div>
+                )}
 
                 {/* Additional Clinical Annotations */}
                 <div>
@@ -364,7 +447,72 @@ export function ReportsPage() {
 
         {/* Right Column: Generated Report Preview & Document Canvas */}
         <div className="lg:col-span-7">
-          {generatedReport ? (
+          {generating ? (
+            <Card className="border-slate-800 bg-slate-900/60 p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
+              <LoadingSpinner size="lg" className="text-teal-400 mb-4" />
+              <h3 className="text-base font-semibold text-slate-200">Synthesizing Chart Records...</h3>
+              <p className="text-xs text-slate-400 mt-1 max-w-sm">
+                Aggregating clinical consultation notes, session timestamps, and diagnostic assessments from verified records.
+              </p>
+            </Card>
+          ) : isEmptyResult ? (
+            /* DEF-04: Reusable Visually Consistent Empty State for Empty Date Ranges */
+            <Card className="border-slate-800 bg-slate-900/90 shadow-xl p-8 sm:p-10 text-center space-y-5">
+              <div className="w-14 h-14 mx-auto rounded-full bg-slate-800 flex items-center justify-center text-teal-400">
+                <CalendarX className="w-7 h-7 text-teal-400" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-bold text-slate-100">
+                  No sessions found for this date range
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                  There are no sessions matching your selected dates. Try expanding the date range or selecting another reporting period.
+                </p>
+                <div className="text-[11px] text-teal-300 font-mono pt-1">
+                  Active Filter: {startDate || 'Earliest'} to {endDate || 'Latest'}
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    handleResetFilters();
+                    setTimeout(handleGenerateReport, 50);
+                  }}
+                  className="flex items-center gap-1.5 text-xs"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reset Filters & View All
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    handleExpandDateRange();
+                    setTimeout(handleGenerateReport, 50);
+                  }}
+                  className="flex items-center gap-1.5 text-xs"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  Expand Date Range (1 Year)
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedReportType('treatment_summary');
+                    setTimeout(handleGenerateReport, 50);
+                  }}
+                  className="flex items-center gap-1.5 text-xs text-slate-300 border-slate-700"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  Treatment Plan Summary
+                </Button>
+              </div>
+            </Card>
+          ) : generatedReport ? (
             <div className="space-y-4">
               {/* Document Action Bar */}
               <div className="flex items-center justify-between gap-3 p-3 bg-slate-900 rounded-xl border border-slate-800 print:hidden">
@@ -534,3 +682,5 @@ export function ReportsPage() {
     </div>
   );
 }
+
+export default ReportsPage;

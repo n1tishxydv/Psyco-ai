@@ -172,6 +172,77 @@ export function BookingPage() {
     );
   }
 
+  const [calendarMenuOpen, setCalendarMenuOpen] = useState(false);
+
+  // DEF-07: Format ISO Date into UTC string YYYYMMDDTHHmmssZ with validation
+  const formatUtcForCalendar = (isoString) => {
+    if (!isoString) return null;
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return null;
+    return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  };
+
+  // DEF-07: Google Calendar Direct URL Generator (Minimal Event Info: Zero Credentials, Zero PIN, Zero Clinical PHI)
+  const getGoogleCalendarUrl = () => {
+    if (!confirmedAppointment || !confirmedAppointment.startTime || !confirmedAppointment.endTime) return '#';
+    const startUtc = formatUtcForCalendar(confirmedAppointment.startTime);
+    const endUtc = formatUtcForCalendar(confirmedAppointment.endTime);
+    if (!startUtc || !endUtc) return '#';
+
+    const title = encodeURIComponent('Psyco AI Appointment');
+    const details = encodeURIComponent('Scheduled consultation via Psyco AI Healthcare Platform.');
+    const location = encodeURIComponent('Psyco AI Telehealth');
+
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startUtc}/${endUtc}&details=${details}&location=${location}`;
+  };
+
+  // DEF-07: Universal RFC 5545 iCalendar (.ics) File Generator & Downloader (Zero PIN, Zero PHI, Non-identifying UID)
+  const handleDownloadIcs = () => {
+    if (!confirmedAppointment || !confirmedAppointment.startTime || !confirmedAppointment.endTime) return;
+
+    const startUtc = formatUtcForCalendar(confirmedAppointment.startTime);
+    const endUtc = formatUtcForCalendar(confirmedAppointment.endTime);
+    if (!startUtc || !endUtc) return;
+
+    const nowUtc = formatUtcForCalendar(new Date().toISOString());
+    const randomEventId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `event-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const uid = `${randomEventId}@psyco.ai`;
+
+    const summary = 'Psyco AI Appointment';
+    const location = 'Psyco AI Telehealth';
+    const description = 'Scheduled consultation via Psyco AI Healthcare Platform.';
+
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Psyco AI//Practice Management//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      `UID:${uid}`,
+      `DTSTAMP:${nowUtc}`,
+      `DTSTART:${startUtc}`,
+      `DTEND:${endUtc}`,
+      `SUMMARY:${summary}`,
+      `DESCRIPTION:${description}`,
+      `LOCATION:${location}`,
+      'STATUS:CONFIRMED',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', 'appointment.ics');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  };
+
   // Confirmation Success View
   if (confirmedAppointment) {
     return (
@@ -219,6 +290,50 @@ export function BookingPage() {
               <span className="font-mono text-base font-bold text-emerald-400 tracking-wider">
                 {confirmedAppointment.sessionPin}
               </span>
+            </div>
+          </div>
+
+          {/* DEF-07: Add to Calendar Dropdown Button */}
+          <div className="relative flex justify-center pt-1">
+            <div className="relative inline-block text-left">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setCalendarMenuOpen(!calendarMenuOpen)}
+                className="flex items-center gap-2 border-teal-500/40 text-teal-300 hover:bg-teal-950/40 text-xs shadow-md"
+                aria-expanded={calendarMenuOpen}
+                aria-label="Add to calendar options"
+              >
+                <CalendarIcon className="w-4 h-4 text-teal-400" />
+                Add to Calendar
+                <span className="text-[10px] opacity-70">▼</span>
+              </Button>
+
+              {calendarMenuOpen && (
+                <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-60 rounded-xl bg-slate-900 border border-slate-800 shadow-2xl py-1.5 z-20 animate-in fade-in-50 zoom-in-95">
+                  <a
+                    href={getGoogleCalendarUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setCalendarMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-slate-200 hover:bg-slate-800 hover:text-teal-300 transition-colors"
+                  >
+                    <CalendarIcon className="w-4 h-4 text-teal-400" />
+                    <span>Google Calendar (Web)</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCalendarMenuOpen(false);
+                      handleDownloadIcs();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-slate-200 hover:bg-slate-800 hover:text-teal-300 transition-colors text-left"
+                  >
+                    <CalendarIcon className="w-4 h-4 text-emerald-400" />
+                    <span>Download .ics (iCal / Outlook)</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

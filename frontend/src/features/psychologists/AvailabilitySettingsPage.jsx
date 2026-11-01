@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '../../components/cards/Card';
 import { Button } from '../../components/common/Button';
 import { Badge } from '../../components/common/Badge';
@@ -13,6 +13,7 @@ import {
   Save,
   CheckCircle,
   AlertCircle,
+  AlertTriangle,
   ExternalLink,
   Video,
   Layers,
@@ -123,9 +124,50 @@ export function AvailabilitySettingsPage() {
     }
   }, []);
 
+  // DEF-06: Live Client-Side Schedule Row Validation (e.g. startTime >= endTime)
+  const scheduleRowErrors = useMemo(() => {
+    const errs = {};
+    for (const [dayKey, day] of Object.entries(weeklySchedule || {})) {
+      if (day.enabled) {
+        if (!day.startTime || !day.endTime) {
+          errs[dayKey] = 'Both start time and end time are required.';
+        } else if (day.startTime >= day.endTime) {
+          errs[dayKey] = 'Start time must be before end time.';
+        }
+      }
+    }
+    return errs;
+  }, [weeklySchedule]);
+
+  // DEF-06: Live Client-Side Leave Overlap Detection
+  const conflictingLeave = useMemo(() => {
+    if (!newLeaveStart || !newLeaveEnd) return null;
+    if (newLeaveEnd < newLeaveStart) {
+      return { reason: 'Inverted dates (End date must be on or after Start date)' };
+    }
+
+    return (
+      leavePeriods.find((existing) => {
+        // True overlap condition: newStart <= existingEnd && newEnd >= existingStart
+        return newLeaveStart <= existing.endDate && newLeaveEnd >= existing.startDate;
+      }) || null
+    );
+  }, [newLeaveStart, newLeaveEnd, leavePeriods]);
+
+  // DEF-06: Live Single Blocked Date Conflict Detection
+  const conflictingBlockedDate = useMemo(() => {
+    if (!newBlockDate) return null;
+    return blockedDates.find((b) => b.date === newBlockDate) || null;
+  }, [newBlockDate, blockedDates]);
+
   // Save General Schedule & Parameters
   const handleSaveSchedule = async (e) => {
     e.preventDefault();
+    if (Object.keys(scheduleRowErrors).length > 0) {
+      setError('Please resolve all conflicting or invalid schedule time blocks before saving.');
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);
@@ -153,6 +195,11 @@ export function AvailabilitySettingsPage() {
   const handleAddBlockedDate = async (e) => {
     e.preventDefault();
     if (!newBlockDate) return;
+    if (conflictingBlockedDate) {
+      alert(`Date ${newBlockDate} is already blocked.`);
+      return;
+    }
+
     try {
       setSaving(true);
       await availabilityService.addBlockedDate({
@@ -190,6 +237,11 @@ export function AvailabilitySettingsPage() {
       alert('End date must be after or equal to start date.');
       return;
     }
+    if (conflictingLeave) {
+      alert(`This time overlaps with an existing availability block: ${conflictingLeave.startDate} to ${conflictingLeave.endDate}.`);
+      return;
+    }
+
     try {
       setSaving(true);
       await availabilityService.addLeavePeriod({
@@ -371,6 +423,12 @@ export function AvailabilitySettingsPage() {
                   Configure days when you accept patient consultations, daily hours, and allowed delivery modes.
                 </p>
               </div>
+              {Object.keys(scheduleRowErrors).length > 0 && (
+                <Badge variant="amber" size="sm" className="flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  Time Block Conflict Detected
+                </Badge>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -381,11 +439,15 @@ export function AvailabilitySettingsPage() {
                   endTime: '17:00',
                   mode: 'both',
                 };
+                const hasError = Boolean(scheduleRowErrors[key]);
+
                 return (
                   <div
                     key={key}
                     className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition ${
-                      day.enabled
+                      hasError
+                        ? 'bg-rose-950/20 border-rose-500/60 ring-1 ring-rose-500/30'
+                        : day.enabled
                         ? 'bg-slate-950/70 border-slate-800'
                         : 'bg-slate-950/30 border-slate-800/40 opacity-60'
                     }`}
@@ -411,7 +473,9 @@ export function AvailabilitySettingsPage() {
                           value={day.startTime}
                           disabled={!day.enabled}
                           onChange={(e) => updateDaySchedule(key, 'startTime', e.target.value)}
-                          className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 disabled:opacity-40"
+                          className={`bg-slate-900 border rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none disabled:opacity-40 ${
+                            hasError ? 'border-rose-500 focus:border-rose-400' : 'border-slate-800 focus:border-emerald-500'
+                          }`}
                         />
                         <span className="text-xs text-slate-400">To</span>
                         <input
@@ -419,7 +483,9 @@ export function AvailabilitySettingsPage() {
                           value={day.endTime}
                           disabled={!day.enabled}
                           onChange={(e) => updateDaySchedule(key, 'endTime', e.target.value)}
-                          className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 disabled:opacity-40"
+                          className={`bg-slate-900 border rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none disabled:opacity-40 ${
+                            hasError ? 'border-rose-500 focus:border-rose-400' : 'border-slate-800 focus:border-emerald-500'
+                          }`}
                         />
                       </div>
 
@@ -436,6 +502,13 @@ export function AvailabilitySettingsPage() {
                           <option value="online">Telehealth Online Only</option>
                         </select>
                       </div>
+
+                      {hasError && (
+                        <div className="w-full sm:w-auto text-[11px] text-rose-300 flex items-center gap-1 font-medium">
+                          <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
+                          <span>{scheduleRowErrors[key]}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -461,92 +534,93 @@ export function AvailabilitySettingsPage() {
                 <select
                   value={sessionDurationMinutes}
                   onChange={(e) => setSessionDurationMinutes(Number(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-teal-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
                 >
-                  <option value={30}>30 Minutes (Check-in)</option>
-                  <option value={45}>45 Minutes (Short Session)</option>
-                  <option value={50}>50 Minutes (Standard Clinical Hour - Recommended)</option>
-                  <option value={60}>60 Minutes (Full Hour)</option>
-                  <option value={90}>90 Minutes (Extended / Assessment)</option>
+                  <option value={30}>30 minutes</option>
+                  <option value={45}>45 minutes</option>
+                  <option value={50}>50 minutes (Standard Therapy Hour)</option>
+                  <option value={60}>60 minutes (Comprehensive)</option>
+                  <option value={90}>90 minutes (Assessment / Couples)</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Buffer Between Sessions
+                  Buffer Time Between Sessions
                 </label>
                 <select
                   value={bufferMinutes}
                   onChange={(e) => setBufferMinutes(Number(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-teal-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
                 >
-                  <option value={0}>0 Minutes (No buffer)</option>
-                  <option value={5}>5 Minutes</option>
-                  <option value={10}>10 Minutes (Recommended)</option>
-                  <option value={15}>15 Minutes</option>
-                  <option value={30}>30 Minutes (Extended rest)</option>
+                  <option value={0}>0 minutes (Back-to-back)</option>
+                  <option value={5}>5 minutes</option>
+                  <option value={10}>10 minutes (Recommended)</option>
+                  <option value={15}>15 minutes</option>
+                  <option value={30}>30 minutes</option>
                 </select>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  Prevents back-to-back overlaps; reserves clinician transition time between appointments.
+                  Buffer time prevents appointment overlap and gives clinicians documentation time.
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Booking Windows & Cancellation Policies */}
+          {/* Notice & Cutoffs */}
           <Card className="bg-slate-900 border-slate-800 shadow-md">
             <CardContent className="p-6 space-y-5">
               <h3 className="text-base font-semibold text-slate-100 flex items-center gap-2">
-                <Shield className="w-5 h-5 text-teal-400" />
-                Booking Windows & Policy
+                <Shield className="w-5 h-5 text-emerald-400" />
+                Booking Policies & Cutoffs
               </h3>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Minimum Advance Notice
-                  </label>
-                  <select
-                    value={minNoticeHours}
-                    onChange={(e) => setMinNoticeHours(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-teal-500"
-                  >
-                    <option value={1}>1 hour</option>
-                    <option value={2}>2 hours (Standard)</option>
-                    <option value={4}>4 hours</option>
-                    <option value={12}>12 hours</option>
-                    <option value={24}>24 hours</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Max Advance Window
-                  </label>
-                  <select
-                    value={maxAdvanceDays}
-                    onChange={(e) => setMaxAdvanceDays(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-teal-500"
-                  >
-                    <option value={14}>14 days</option>
-                    <option value={30}>30 days</option>
-                    <option value={60}>60 days (Standard)</option>
-                    <option value={90}>90 days</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Minimum Advance Notice Required
+                </label>
+                <select
+                  value={minNoticeHours}
+                  onChange={(e) => setMinNoticeHours(Number(e.target.value))}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
+                >
+                  <option value={1}>1 hour</option>
+                  <option value={2}>2 hours</option>
+                  <option value={4}>4 hours</option>
+                  <option value={12}>12 hours</option>
+                  <option value={24}>24 hours (1 full day)</option>
+                </select>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Prevents same-day surprise bookings.
+                </p>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Cancellation Policy Cutoff
+                  Maximum Booking Advance Window
+                </label>
+                <select
+                  value={maxAdvanceDays}
+                  onChange={(e) => setMaxAdvanceDays(Number(e.target.value))}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
+                >
+                  <option value={14}>14 days</option>
+                  <option value={30}>30 days (1 month)</option>
+                  <option value={60}>60 days (2 months)</option>
+                  <option value={90}>90 days (1 quarter)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Cancellation Notice Cutoff
                 </label>
                 <select
                   value={cancellationCutoffHours}
                   onChange={(e) => setCancellationCutoffHours(Number(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 focus:outline-none focus:border-teal-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
                 >
                   <option value={12}>12 hours</option>
-                  <option value={24}>24 hours (Standard policy)</option>
+                  <option value={24}>24 hours</option>
                   <option value={48}>48 hours</option>
                 </select>
                 <p className="text-[11px] text-slate-400 mt-1">
@@ -563,8 +637,8 @@ export function AvailabilitySettingsPage() {
             type="submit"
             variant="primary"
             size="md"
-            disabled={saving}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-2"
+            disabled={saving || Object.keys(scheduleRowErrors).length > 0}
+            className="bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-2 disabled:opacity-40"
           >
             <Save className="w-4 h-4" />
             {saving ? 'Saving...' : 'Save Availability & Policy Settings'}
@@ -593,7 +667,9 @@ export function AvailabilitySettingsPage() {
                   required
                   value={newBlockDate}
                   onChange={(e) => setNewBlockDate(e.target.value)}
-                  className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                  className={`bg-slate-900 border rounded-lg p-2 text-xs text-slate-200 focus:outline-none ${
+                    conflictingBlockedDate ? 'border-amber-500 focus:border-amber-400' : 'border-slate-800 focus:border-amber-500'
+                  }`}
                 />
                 <input
                   type="text"
@@ -603,7 +679,22 @@ export function AvailabilitySettingsPage() {
                   className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
                 />
               </div>
-              <Button type="submit" variant="secondary" size="sm" className="w-full flex items-center justify-center gap-1 text-xs">
+
+              {/* DEF-06: Live Conflict Alert for Blocked Date */}
+              {conflictingBlockedDate && (
+                <div className="p-2.5 rounded-lg bg-amber-950/40 border border-amber-500/40 text-[11px] text-amber-300 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>This date is already blocked ({conflictingBlockedDate.date} — {conflictingBlockedDate.reason || 'Blocked'}).</span>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                variant="secondary"
+                size="sm"
+                disabled={saving || Boolean(conflictingBlockedDate)}
+                className="w-full flex items-center justify-center gap-1 text-xs disabled:opacity-40"
+              >
                 <Plus className="w-3.5 h-3.5" /> Block Date
               </Button>
             </form>
@@ -657,7 +748,9 @@ export function AvailabilitySettingsPage() {
                     required
                     value={newLeaveStart}
                     onChange={(e) => setNewLeaveStart(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-teal-500"
+                    className={`w-full bg-slate-900 border rounded-lg p-2 text-xs text-slate-200 focus:outline-none ${
+                      conflictingLeave ? 'border-amber-500 focus:border-amber-400' : 'border-slate-800 focus:border-teal-500'
+                    }`}
                   />
                 </div>
                 <div>
@@ -667,10 +760,23 @@ export function AvailabilitySettingsPage() {
                     required
                     value={newLeaveEnd}
                     onChange={(e) => setNewLeaveEnd(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-teal-500"
+                    className={`w-full bg-slate-900 border rounded-lg p-2 text-xs text-slate-200 focus:outline-none ${
+                      conflictingLeave ? 'border-amber-500 focus:border-amber-400' : 'border-slate-800 focus:border-teal-500'
+                    }`}
                   />
                 </div>
               </div>
+
+              {/* DEF-06: Live Leave Overlap Warning */}
+              {conflictingLeave && (
+                <div className="p-2.5 rounded-lg bg-amber-950/40 border border-amber-500/40 text-[11px] text-amber-300 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>
+                    This time overlaps with an existing availability block ({conflictingLeave.startDate} to {conflictingLeave.endDate} — {conflictingLeave.reason || 'Leave'}).
+                  </span>
+                </div>
+              )}
+
               <input
                 type="text"
                 placeholder="Reason (e.g., Annual Leave / Conference)"
@@ -678,7 +784,13 @@ export function AvailabilitySettingsPage() {
                 onChange={(e) => setNewLeaveReason(e.target.value)}
                 className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-teal-500"
               />
-              <Button type="submit" variant="secondary" size="sm" className="w-full flex items-center justify-center gap-1 text-xs">
+              <Button
+                type="submit"
+                variant="secondary"
+                size="sm"
+                disabled={saving || Boolean(conflictingLeave)}
+                className="w-full flex items-center justify-center gap-1 text-xs disabled:opacity-40"
+              >
                 <Plus className="w-3.5 h-3.5" /> Schedule Leave
               </Button>
             </form>
@@ -716,3 +828,5 @@ export function AvailabilitySettingsPage() {
     </div>
   );
 }
+
+export default AvailabilitySettingsPage;

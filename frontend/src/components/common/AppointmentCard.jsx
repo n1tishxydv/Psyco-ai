@@ -45,6 +45,37 @@ export function AppointmentCard({
   const isCompleted = status === 'completed';
   const isConfirmed = status === 'confirmed';
 
+  // Format location / consultation mode safely (prevents Minified React error #31 when location is an object)
+  let locationText = 'Clinic Consultation';
+  if (isOnline) {
+    locationText = 'Telehealth Consultation (Secure Encrypted Video)';
+  } else if (typeof location === 'string' && location.trim()) {
+    locationText = location.trim();
+  } else if (location && typeof location === 'object') {
+    if (typeof location.addressOrUrl === 'string' && location.addressOrUrl.trim()) {
+      locationText = location.addressOrUrl.trim();
+    } else if (typeof location.address === 'string' && location.address.trim()) {
+      locationText = location.address.trim();
+    } else if (typeof location.name === 'string' && location.name.trim()) {
+      locationText = location.name.trim();
+    }
+  } else if (clinicAddress) {
+    if (typeof clinicAddress === 'string' && clinicAddress.trim()) {
+      locationText = clinicAddress.trim();
+    } else if (typeof clinicAddress === 'object') {
+      const parts = [clinicAddress.line1, clinicAddress.city, clinicAddress.state].filter(Boolean);
+      locationText = parts.length > 0 ? parts.join(', ') : 'Clinic Consultation';
+    }
+  }
+
+  const actualMeetingLink =
+    meetingLink ||
+    appointment.googleMeetUrl ||
+    appointment.googleMeetLink ||
+    (isOnline && location && typeof location === 'object' && typeof location.addressOrUrl === 'string' && location.addressOrUrl.startsWith('http')
+      ? location.addressOrUrl
+      : null);
+
   // Format date readable
   let displayDate = date;
   if (date) {
@@ -105,11 +136,7 @@ export function AppointmentCard({
             ) : (
               <MapPin className="w-4 h-4 text-psyco-softGrey shrink-0" />
             )}
-            <span className="truncate">
-              {isOnline
-                ? 'Telehealth Consultation (Secure Encrypted Video)'
-                : location || (clinicAddress ? `${clinicAddress.city}, ${clinicAddress.state}` : 'Clinic Consultation')}
-            </span>
+            <span className="truncate">{locationText}</span>
           </div>
 
           {reason && (
@@ -121,14 +148,14 @@ export function AppointmentCard({
         </div>
 
         {/* Telehealth Link if Confirmed */}
-        {isOnline && isConfirmed && meetingLink && (
+        {isOnline && isConfirmed && actualMeetingLink && (
           <div className="p-3 rounded-xl bg-psyco-darkNavy border border-psyco-steel flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs font-medium text-psyco-softGrey truncate">
               <Video className="w-4 h-4 shrink-0" />
               <span className="truncate">Google Meet Room Ready</span>
             </div>
             <a
-              href={meetingLink}
+              href={actualMeetingLink}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-psyco-softGrey text-psyco-deepNavy text-xs font-semibold hover:bg-white transition-colors shrink-0"

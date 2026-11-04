@@ -402,7 +402,11 @@ export function PatientAppointmentsPage() {
                     ) : (
                       <div className="flex items-center gap-2 text-slate-300 pt-1 border-t border-slate-800/80">
                         <MapPin className="w-4 h-4 text-teal-400 flex-shrink-0" />
-                        <span>{apt.location?.addressOrUrl || 'In-Person Practice Clinic'}</span>
+                        <span>
+                          {typeof apt.location === 'string'
+                            ? apt.location
+                            : (apt.location?.addressOrUrl || 'In-Person Practice Clinic')}
+                        </span>
                       </div>
                     )}
                   </div>

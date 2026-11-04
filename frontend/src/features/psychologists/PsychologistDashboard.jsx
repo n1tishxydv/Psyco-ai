@@ -264,6 +264,13 @@ export function PsychologistDashboard() {
             </Button>
           </Link>
 
+          <Link to="/psychologist/transcripts">
+            <Button variant="secondary" size="sm" className="flex items-center justify-center gap-2 text-xs w-full sm:w-auto">
+              <FileText className="w-4 h-4 text-psyco-softGrey" />
+              Transcripts
+            </Button>
+          </Link>
+
           <Link to="/psychologist/profile">
             <Button variant="ghost" size="sm" className="flex items-center justify-center gap-2 text-xs text-psyco-coolGrey hover:text-psyco-softGrey w-full sm:w-auto">
               <User className="w-4 h-4" />
@@ -453,7 +460,11 @@ export function PsychologistDashboard() {
                             ) : (
                               <>
                                 <MapPin className="w-3.5 h-3.5 text-psyco-softGrey" />
-                                <span>{apt.location?.addressOrUrl || 'In-Person Practice Clinic'}</span>
+                                <span>
+                                  {typeof apt.location === 'string'
+                                    ? apt.location
+                                    : (apt.location?.addressOrUrl || 'In-Person Practice Clinic')}
+                                </span>
                               </>
                             )}
                           </div>

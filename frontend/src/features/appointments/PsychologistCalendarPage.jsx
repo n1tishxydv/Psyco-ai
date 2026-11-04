@@ -481,13 +481,17 @@ export function PsychologistCalendarPage() {
           <div className="flex items-center gap-2 mb-1">
             <Badge variant="green" size="sm">Clinician Schedule</Badge>
             {calendarConnected ? (
-              <Badge variant="teal" size="sm" className="flex items-center gap-1">
-                <CheckCircle className="w-3 h-3 text-emerald-400" /> Google Calendar Synced
-              </Badge>
+              <Link to="/psychologist/settings?tab=integrations">
+                <Badge variant="teal" size="sm" className="flex items-center gap-1 cursor-pointer hover:bg-teal-500/20 transition-colors">
+                  <CheckCircle className="w-3 h-3 text-emerald-400" /> Google Calendar Synced
+                </Badge>
+              </Link>
             ) : (
-              <Badge variant="neutral" size="sm" className="flex items-center gap-1 text-slate-400">
-                Google Calendar Disconnected
-              </Badge>
+              <Link to="/psychologist/settings?tab=integrations">
+                <Badge variant="neutral" size="sm" className="flex items-center gap-1 text-slate-400 cursor-pointer hover:bg-slate-700/50 transition-colors">
+                  <CalendarIcon className="w-3 h-3 text-blue-400" /> Connect Google Calendar
+                </Badge>
+              </Link>
             )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-100">

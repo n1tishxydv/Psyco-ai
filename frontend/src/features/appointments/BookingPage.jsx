@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent } from '../../components/cards/Card';
 import { Input } from '../../components/common/Input';
@@ -25,6 +25,211 @@ import {
   Building,
   Sparkles,
 } from 'lucide-react';
+
+function BookingConfirmationView({ confirmedAppointment, psychologist, onNavigateAppointments, onNavigateDashboard }) {
+  const [calendarMenuOpen, setCalendarMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Click-outside and Escape key dismissal for calendar menu (Task B4)
+  useEffect(() => {
+    if (!calendarMenuOpen) return;
+
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') {
+        setCalendarMenuOpen(false);
+      }
+    }
+
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setCalendarMenuOpen(false);
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [calendarMenuOpen]);
+
+  // Format ISO Date into UTC string YYYYMMDDTHHmmssZ with validation
+  const formatUtcForCalendar = (isoString) => {
+    if (!isoString) return null;
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return null;
+    return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  };
+
+  // Google Calendar Direct URL Generator (Minimal Event Info: Zero Credentials, Zero PIN, Zero Clinical PHI)
+  const getGoogleCalendarUrl = () => {
+    if (!confirmedAppointment || !confirmedAppointment.startTime || !confirmedAppointment.endTime) return '#';
+    const startUtc = formatUtcForCalendar(confirmedAppointment.startTime);
+    const endUtc = formatUtcForCalendar(confirmedAppointment.endTime);
+    if (!startUtc || !endUtc) return '#';
+
+    const title = encodeURIComponent('Psyco AI Appointment');
+    const details = encodeURIComponent('Scheduled consultation via Psyco AI Healthcare Platform.');
+    const location = encodeURIComponent(
+      confirmedAppointment.sessionMode === 'in_person' ? 'Consultation Office' : 'Psyco AI Telehealth'
+    );
+
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startUtc}/${endUtc}&details=${details}&location=${location}`;
+  };
+
+  // Universal RFC 5545 iCalendar (.ics) File Generator & Downloader (Zero PIN, Zero PHI, Non-identifying UID)
+  const handleDownloadIcs = () => {
+    if (!confirmedAppointment || !confirmedAppointment.startTime || !confirmedAppointment.endTime) return;
+
+    const startUtc = formatUtcForCalendar(confirmedAppointment.startTime);
+    const endUtc = formatUtcForCalendar(confirmedAppointment.endTime);
+    if (!startUtc || !endUtc) return;
+
+    const nowUtc = formatUtcForCalendar(new Date().toISOString());
+    const randomEventId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `event-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const uid = `${randomEventId}@psyco.ai`;
+
+    const summary = 'Psyco AI Appointment';
+    const location = confirmedAppointment.sessionMode === 'in_person' ? 'Consultation Office' : 'Psyco AI Telehealth';
+    const description = 'Scheduled consultation via Psyco AI Healthcare Platform.';
+
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Psyco AI//Practice Management//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      `UID:${uid}`,
+      `DTSTAMP:${nowUtc}`,
+      `DTSTART:${startUtc}`,
+      `DTEND:${endUtc}`,
+      `SUMMARY:${summary}`,
+      `DESCRIPTION:${description}`,
+      `LOCATION:${location}`,
+      'STATUS:CONFIRMED',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', 'appointment.ics');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-12">
+      <Card className="border-teal-500/40 bg-slate-900 shadow-2xl p-6 sm:p-8 space-y-6">
+        <div className="text-center space-y-3">
+          <div className="w-14 h-14 mx-auto rounded-full bg-teal-500/10 flex items-center justify-center text-teal-400">
+            <CheckCircle2 className="w-8 h-8" />
+          </div>
+          <Badge variant="teal" size="sm">Booking Request Submitted</Badge>
+          <h2 className="text-2xl font-bold text-slate-100">Appointment Scheduled</h2>
+          <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
+            Your appointment request with <span className="text-teal-300 font-semibold">{psychologist?.fullName}</span> has been securely recorded.
+          </p>
+        </div>
+
+        <div className="p-4 bg-slate-950/70 rounded-xl border border-slate-800 space-y-3 text-xs">
+          <div className="flex justify-between py-1 border-b border-slate-800 text-slate-300">
+            <span className="text-slate-500">Appointment Reference</span>
+            <span className="font-mono text-teal-300 font-semibold">{confirmedAppointment.id}</span>
+          </div>
+          <div className="flex justify-between py-1 border-b border-slate-800 text-slate-300">
+            <span className="text-slate-500">Scheduled Date & Time</span>
+            <span className="font-semibold text-slate-100">
+              {new Date(confirmedAppointment.startTime).toLocaleString([], {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              })}
+            </span>
+          </div>
+          <div className="flex justify-between py-1 border-b border-slate-800 text-slate-300">
+            <span className="text-slate-500">Consultation Mode</span>
+            <span className="capitalize font-semibold text-teal-300">
+              {confirmedAppointment.sessionMode === 'in_person' ? 'In-Person Consultation' : 'Online (Google Meet)'}
+            </span>
+          </div>
+          <div className="flex justify-between py-1 border-b border-slate-800 text-slate-300">
+            <span className="text-slate-500">Current Status</span>
+            <Badge variant="amber" size="sm" className="capitalize">
+              {confirmedAppointment.status}
+            </Badge>
+          </div>
+          <div className="flex justify-between py-1 text-slate-300">
+            <span className="text-slate-500">Confidential Session PIN</span>
+            <span className="font-mono text-base font-bold text-emerald-400 tracking-wider">
+              {confirmedAppointment.sessionPin}
+            </span>
+          </div>
+        </div>
+
+        {/* DEF-07: Add to Calendar Dropdown Button */}
+        <div className="relative flex justify-center pt-1" ref={menuRef}>
+          <div className="relative inline-block text-left">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setCalendarMenuOpen((prev) => !prev)}
+              className="flex items-center gap-2 border-teal-500/40 text-teal-300 hover:bg-teal-950/40 text-xs shadow-md"
+              aria-expanded={calendarMenuOpen}
+              aria-haspopup="true"
+              aria-label="Add to calendar options"
+            >
+              <CalendarIcon className="w-4 h-4 text-teal-400" />
+              Add to Calendar
+              <span className="text-[10px] opacity-70">▼</span>
+            </Button>
+
+            {calendarMenuOpen && (
+              <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-60 rounded-xl bg-slate-900 border border-slate-800 shadow-2xl py-1.5 z-20 animate-in fade-in-50 zoom-in-95">
+                <a
+                  href={getGoogleCalendarUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setCalendarMenuOpen(false)}
+                  className="flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-slate-200 hover:bg-slate-800 hover:text-teal-300 transition-colors"
+                >
+                  <CalendarIcon className="w-4 h-4 text-teal-400" />
+                  <span>Google Calendar (Web)</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCalendarMenuOpen(false);
+                    handleDownloadIcs();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-slate-200 hover:bg-slate-800 hover:text-teal-300 transition-colors text-left"
+                >
+                  <CalendarIcon className="w-4 h-4 text-emerald-400" />
+                  <span>Download .ics (iCal / Outlook)</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+          <Button variant="primary" size="md" onClick={onNavigateAppointments}>
+            View My Appointments
+          </Button>
+          <Button variant="secondary" size="md" onClick={onNavigateDashboard}>
+            Go to Dashboard
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
 
 export function BookingPage() {
   const { psychologistId } = useParams();
@@ -172,181 +377,15 @@ export function BookingPage() {
     );
   }
 
-  const [calendarMenuOpen, setCalendarMenuOpen] = useState(false);
-
-  // DEF-07: Format ISO Date into UTC string YYYYMMDDTHHmmssZ with validation
-  const formatUtcForCalendar = (isoString) => {
-    if (!isoString) return null;
-    const d = new Date(isoString);
-    if (isNaN(d.getTime())) return null;
-    return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-  };
-
-  // DEF-07: Google Calendar Direct URL Generator (Minimal Event Info: Zero Credentials, Zero PIN, Zero Clinical PHI)
-  const getGoogleCalendarUrl = () => {
-    if (!confirmedAppointment || !confirmedAppointment.startTime || !confirmedAppointment.endTime) return '#';
-    const startUtc = formatUtcForCalendar(confirmedAppointment.startTime);
-    const endUtc = formatUtcForCalendar(confirmedAppointment.endTime);
-    if (!startUtc || !endUtc) return '#';
-
-    const title = encodeURIComponent('Psyco AI Appointment');
-    const details = encodeURIComponent('Scheduled consultation via Psyco AI Healthcare Platform.');
-    const location = encodeURIComponent('Psyco AI Telehealth');
-
-    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startUtc}/${endUtc}&details=${details}&location=${location}`;
-  };
-
-  // DEF-07: Universal RFC 5545 iCalendar (.ics) File Generator & Downloader (Zero PIN, Zero PHI, Non-identifying UID)
-  const handleDownloadIcs = () => {
-    if (!confirmedAppointment || !confirmedAppointment.startTime || !confirmedAppointment.endTime) return;
-
-    const startUtc = formatUtcForCalendar(confirmedAppointment.startTime);
-    const endUtc = formatUtcForCalendar(confirmedAppointment.endTime);
-    if (!startUtc || !endUtc) return;
-
-    const nowUtc = formatUtcForCalendar(new Date().toISOString());
-    const randomEventId = (typeof crypto !== 'undefined' && crypto.randomUUID)
-      ? crypto.randomUUID()
-      : `event-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-    const uid = `${randomEventId}@psyco.ai`;
-
-    const summary = 'Psyco AI Appointment';
-    const location = 'Psyco AI Telehealth';
-    const description = 'Scheduled consultation via Psyco AI Healthcare Platform.';
-
-    const icsContent = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//Psyco AI//Practice Management//EN',
-      'CALSCALE:GREGORIAN',
-      'METHOD:PUBLISH',
-      'BEGIN:VEVENT',
-      `UID:${uid}`,
-      `DTSTAMP:${nowUtc}`,
-      `DTSTART:${startUtc}`,
-      `DTEND:${endUtc}`,
-      `SUMMARY:${summary}`,
-      `DESCRIPTION:${description}`,
-      `LOCATION:${location}`,
-      'STATUS:CONFIRMED',
-      'END:VEVENT',
-      'END:VCALENDAR',
-    ].join('\r\n');
-
-    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', 'appointment.ics');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
-  };
-
   // Confirmation Success View
   if (confirmedAppointment) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <Card className="border-teal-500/40 bg-slate-900 shadow-2xl p-6 sm:p-8 space-y-6">
-          <div className="text-center space-y-3">
-            <div className="w-14 h-14 mx-auto rounded-full bg-teal-500/10 flex items-center justify-center text-teal-400">
-              <CheckCircle2 className="w-8 h-8" />
-            </div>
-            <Badge variant="teal" size="sm">Booking Request Submitted</Badge>
-            <h2 className="text-2xl font-bold text-slate-100">Appointment Scheduled</h2>
-            <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
-              Your appointment request with <span className="text-teal-300 font-semibold">{psychologist.fullName}</span> has been securely recorded.
-            </p>
-          </div>
-
-          <div className="p-4 bg-slate-950/70 rounded-xl border border-slate-800 space-y-3 text-xs">
-            <div className="flex justify-between py-1 border-b border-slate-800 text-slate-300">
-              <span className="text-slate-500">Appointment Reference</span>
-              <span className="font-mono text-teal-300 font-semibold">{confirmedAppointment.id}</span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-slate-800 text-slate-300">
-              <span className="text-slate-500">Scheduled Date & Time</span>
-              <span className="font-semibold text-slate-100">
-                {new Date(confirmedAppointment.startTime).toLocaleString([], {
-                  dateStyle: 'medium',
-                  timeStyle: 'short',
-                })}
-              </span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-slate-800 text-slate-300">
-              <span className="text-slate-500">Consultation Mode</span>
-              <span className="capitalize font-semibold text-teal-300">
-                {confirmedAppointment.sessionMode === 'in_person' ? 'In-Person Consultation' : 'Online (Google Meet)'}
-              </span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-slate-800 text-slate-300">
-              <span className="text-slate-500">Current Status</span>
-              <Badge variant="amber" size="sm" className="capitalize">
-                {confirmedAppointment.status}
-              </Badge>
-            </div>
-            <div className="flex justify-between py-1 text-slate-300">
-              <span className="text-slate-500">Confidential Session PIN</span>
-              <span className="font-mono text-base font-bold text-emerald-400 tracking-wider">
-                {confirmedAppointment.sessionPin}
-              </span>
-            </div>
-          </div>
-
-          {/* DEF-07: Add to Calendar Dropdown Button */}
-          <div className="relative flex justify-center pt-1">
-            <div className="relative inline-block text-left">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setCalendarMenuOpen(!calendarMenuOpen)}
-                className="flex items-center gap-2 border-teal-500/40 text-teal-300 hover:bg-teal-950/40 text-xs shadow-md"
-                aria-expanded={calendarMenuOpen}
-                aria-label="Add to calendar options"
-              >
-                <CalendarIcon className="w-4 h-4 text-teal-400" />
-                Add to Calendar
-                <span className="text-[10px] opacity-70">▼</span>
-              </Button>
-
-              {calendarMenuOpen && (
-                <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-60 rounded-xl bg-slate-900 border border-slate-800 shadow-2xl py-1.5 z-20 animate-in fade-in-50 zoom-in-95">
-                  <a
-                    href={getGoogleCalendarUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setCalendarMenuOpen(false)}
-                    className="flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-slate-200 hover:bg-slate-800 hover:text-teal-300 transition-colors"
-                  >
-                    <CalendarIcon className="w-4 h-4 text-teal-400" />
-                    <span>Google Calendar (Web)</span>
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCalendarMenuOpen(false);
-                      handleDownloadIcs();
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-slate-200 hover:bg-slate-800 hover:text-teal-300 transition-colors text-left"
-                  >
-                    <CalendarIcon className="w-4 h-4 text-emerald-400" />
-                    <span>Download .ics (iCal / Outlook)</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <Button variant="primary" size="md" onClick={() => navigate('/patient/appointments')}>
-              View My Appointments
-            </Button>
-            <Button variant="secondary" size="md" onClick={() => navigate('/patient/dashboard')}>
-              Go to Dashboard
-            </Button>
-          </div>
-        </Card>
-      </div>
+      <BookingConfirmationView
+        confirmedAppointment={confirmedAppointment}
+        psychologist={psychologist}
+        onNavigateAppointments={() => navigate('/patient/appointments')}
+        onNavigateDashboard={() => navigate('/patient/dashboard')}
+      />
     );
   }
 

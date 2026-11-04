@@ -231,7 +231,7 @@ export function Navbar() {
                             Availability Settings
                           </Link>
                           <Link
-                            to="/clinical/reports"
+                            to="/psychologist/reports"
                             onClick={() => setUserDropdownOpen(false)}
                             className="flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
                           >
@@ -446,7 +446,7 @@ export function Navbar() {
                           Working Hours & Availability
                         </Link>
                         <Link
-                          to="/clinical/reports"
+                          to="/psychologist/reports"
                           onClick={() => setMobileMenuOpen(false)}
                           className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-sm text-slate-300 hover:bg-slate-800"
                         >

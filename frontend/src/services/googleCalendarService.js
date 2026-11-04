@@ -5,8 +5,9 @@ export const googleCalendarService = {
     return apiRequest('/integrations/google/status');
   },
 
-  getAuthUrl: async () => {
-    return apiRequest('/integrations/google/auth-url');
+  getAuthUrl: async (returnTo = '') => {
+    const query = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : '';
+    return apiRequest(`/integrations/google/auth-url${query}`);
   },
 
   disconnect: async () => {

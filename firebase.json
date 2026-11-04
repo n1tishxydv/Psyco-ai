@@ -9,6 +9,13 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "redirects": [
+      {
+        "source": "/api/v1/integrations/google/callback",
+        "destination": "https://psyco-ai.onrender.com/api/v1/integrations/google/callback",
+        "type": 302
+      }
+    ],
     "rewrites": [
       {
         "source": "**",

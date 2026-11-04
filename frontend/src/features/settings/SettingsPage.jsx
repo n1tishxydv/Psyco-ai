@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '../../components/cards/Card';
 import { Input } from '../../components/common/Input';
 import { Select } from '../../components/common/Select';
@@ -8,6 +9,7 @@ import { AlertBanner } from '../../components/common/AlertBanner';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { useAuth } from '../../context/AuthContext';
 import { profileService } from '../../services/profileService';
+import { GoogleCalendarIntegrationCard } from '../integrations/GoogleCalendarIntegrationCard';
 import {
   auth,
   updatePassword,
@@ -26,15 +28,31 @@ import {
   User,
   ArrowRight,
   Globe,
+  Calendar,
 } from 'lucide-react';
 
 export function SettingsPage() {
   const { user, firebaseUser, logout, refreshProfile } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState('preferences'); // 'preferences' | 'security' | 'danger'
+  const initialTab =
+    searchParams.get('tab') ||
+    (searchParams.get('calendar_connected') || searchParams.get('calendar_error')
+      ? 'integrations'
+      : 'preferences');
+  const [activeTab, setActiveTab] = useState(initialTab); // 'preferences' | 'integrations' | 'security' | 'danger'
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['preferences', 'integrations', 'security', 'danger'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    } else if (searchParams.get('calendar_connected') || searchParams.get('calendar_error')) {
+      setActiveTab('integrations');
+    }
+  }, [searchParams]);
 
   // Preferences form state
   const [preferences, setPreferences] = useState({
@@ -193,33 +211,45 @@ export function SettingsPage() {
       {successMsg && <AlertBanner type="success" title="Success" message={successMsg} />}
 
       {/* Settings Navigation Tabs */}
-      <div className="flex p-1 bg-slate-900 border border-slate-800 rounded-xl max-w-md">
+      <div className="flex p-1 bg-slate-900 border border-slate-800 rounded-xl max-w-2xl overflow-x-auto">
         <button
           type="button"
           onClick={() => { setActiveTab('preferences'); setErrorMsg(null); }}
-          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+          className={`flex-1 min-w-[120px] py-2 text-xs font-semibold rounded-lg transition-all ${
             activeTab === 'preferences'
               ? 'bg-slate-800 text-teal-300 shadow-sm'
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          Preferences & Regional
+          Preferences
+        </button>
+        <button
+          type="button"
+          onClick={() => { setActiveTab('integrations'); setErrorMsg(null); }}
+          className={`flex-1 min-w-[150px] py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+            activeTab === 'integrations'
+              ? 'bg-slate-800 text-teal-300 shadow-sm'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Calendar className="w-3.5 h-3.5" />
+          Calendar & Integrations
         </button>
         <button
           type="button"
           onClick={() => { setActiveTab('security'); setErrorMsg(null); }}
-          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+          className={`flex-1 min-w-[120px] py-2 text-xs font-semibold rounded-lg transition-all ${
             activeTab === 'security'
               ? 'bg-slate-800 text-teal-300 shadow-sm'
               : 'text-slate-400 hover:text-slate-200'
           }`}
         >
-          Security & Password
+          Security
         </button>
         <button
           type="button"
           onClick={() => { setActiveTab('danger'); setErrorMsg(null); }}
-          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+          className={`flex-1 min-w-[100px] py-2 text-xs font-semibold rounded-lg transition-all ${
             activeTab === 'danger'
               ? 'bg-red-950/40 text-red-300 border border-red-500/30 shadow-sm'
               : 'text-slate-400 hover:text-red-400'
@@ -228,6 +258,17 @@ export function SettingsPage() {
           Danger Zone
         </button>
       </div>
+
+      {/* TAB: Google Calendar & Integrations */}
+      {activeTab === 'integrations' && (
+        <GoogleCalendarIntegrationCard
+          returnTo={
+            user?.role === 'psychologist' || user?.activeRole === 'psychologist'
+              ? '/psychologist/settings?tab=integrations'
+              : '/patient/settings?tab=integrations'
+          }
+        />
+      )}
 
       {/* TAB 1: Preferences & Regional */}
       {activeTab === 'preferences' && (

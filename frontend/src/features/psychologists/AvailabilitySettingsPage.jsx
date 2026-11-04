@@ -277,7 +277,7 @@ export function AvailabilitySettingsPage() {
   const handleConnectCalendar = async () => {
     try {
       setCalendarLoading(true);
-      const res = await googleCalendarService.getAuthUrl();
+      const res = await googleCalendarService.getAuthUrl('/psychologist/settings?tab=integrations');
       if (res.data?.url) {
         window.location.href = res.data.url;
       } else {

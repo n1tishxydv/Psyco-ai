@@ -155,7 +155,7 @@ export function PracticeSetupPage() {
   const handleConnectCalendar = async () => {
     setCalendarLoading(true);
     try {
-      const res = await googleCalendarService.getAuthUrl();
+      const res = await googleCalendarService.getAuthUrl('/psychologist/settings?tab=integrations');
       if (res.data?.url) {
         window.location.href = res.data.url;
       }

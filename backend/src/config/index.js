@@ -171,6 +171,24 @@ export function validateFirebaseProjectAlignment({ projectId, clientEmail, datab
 
 import { resolveAiSandboxConfig } from './aiSandboxConfig.js';
 
+/**
+ * Normalizes the Google OAuth Redirect URI, cleaning up double slashes and
+ * correcting common domain misconfigurations between frontend hosting and backend API.
+ *
+ * @param {string|undefined} rawUri
+ * @returns {string|undefined}
+ */
+export function normalizeGoogleRedirectUri(rawUri) {
+  if (!rawUri || typeof rawUri !== 'string') return rawUri;
+  let uri = rawUri.trim();
+  if (uri.includes('psyco-ai-staging.web.app')) {
+    uri = uri
+      .replace('https://psyco-ai-staging.web.app//', 'https://psyco-ai.onrender.com/')
+      .replace('https://psyco-ai-staging.web.app/', 'https://psyco-ai.onrender.com/');
+  }
+  return uri.replace(/([^:])\/{2,}/g, '$1/');
+}
+
 const defaultProjectId = process.env.NODE_ENV === 'production' ? 'psyco-9c13d' : 'psyco-ai-staging';
 const defaultDatabaseURL = process.env.NODE_ENV === 'production'
   ? 'https://psyco-9c13d-default-rtdb.firebaseio.com'
@@ -221,7 +239,7 @@ const config = {
       calendarApiKey: process.env.GOOGLE_CALENDAR_API_KEY,
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      redirectUri: process.env.GOOGLE_REDIRECT_URI,
+      redirectUri: normalizeGoogleRedirectUri(process.env.GOOGLE_REDIRECT_URI),
       isConfigured: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
     },
     gemini: {

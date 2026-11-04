@@ -1,6 +1,10 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { AppShell } from '../components/layout/AppShell';
+import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { PublicLayout } from '../components/layout/PublicLayout';
+import { PatientLayout } from '../components/layout/PatientLayout';
+import { PsychologistLayout } from '../components/layout/PsychologistLayout';
+import { AdminLayout } from '../components/layout/AdminLayout';
 import { ProtectedRoute } from './ProtectedRoute';
 import { RoleRoute } from './RoleRoute';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
@@ -22,6 +26,7 @@ import { PsychologistPortalInfoPage } from '../features/public/PsychologistPorta
 import { LoginPage } from '../features/auth/LoginPage';
 import { RegisterPage } from '../features/auth/RegisterPage';
 import { OnboardingPage } from '../features/auth/OnboardingPage';
+import { WorkspaceChooserPage } from '../features/auth/WorkspaceChooserPage';
 
 // Directory & Public Booking
 import { PsychologistDirectoryPage } from '../features/directory/PsychologistDirectoryPage';
@@ -131,6 +136,14 @@ import { EmptyState } from '../components/common/EmptyState';
 import { FileQuestion } from 'lucide-react';
 
 function NotFoundPage() {
+  const { user } = useAuth();
+  const dashboardPath =
+    user?.role === 'psychologist' || user?.activeRole === 'psychologist'
+      ? '/psychologist/dashboard'
+      : user?.role === 'patient' || user?.activeRole === 'patient'
+      ? '/patient/dashboard'
+      : '/';
+
   return (
     <div className="flex-1 flex items-center justify-center p-8">
       <div className="max-w-md w-full">
@@ -138,11 +151,37 @@ function NotFoundPage() {
           icon={FileQuestion}
           title="Page Not Found"
           description="The requested URL was not found on the Psyco AI platform."
-          actionLabel="Return to Home"
-          onAction={() => window.location.href = '/'}
+          actionLabel={user ? 'Return to Dashboard' : 'Return to Home'}
+          onAction={() => (window.location.href = dashboardPath)}
         />
       </div>
     </div>
+  );
+}
+
+function SettingsRedirect() {
+  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
+  const isPsychologist =
+    user?.role === 'psychologist' || user?.activeRole === 'psychologist';
+  return (
+    <Navigate
+      to={isPsychologist ? `/psychologist/settings${queryString}` : `/patient/settings${queryString}`}
+      replace
+    />
+  );
+}
+
+function AppointmentsRedirect() {
+  const { user } = useAuth();
+  const isPsychologist =
+    user?.role === 'psychologist' || user?.activeRole === 'psychologist';
+  return (
+    <Navigate
+      to={isPsychologist ? '/psychologist/appointments' : '/patient/appointments'}
+      replace
+    />
   );
 }
 
@@ -157,320 +196,388 @@ function RouteLoadingFallback() {
 
 export function AppRoutes() {
   return (
-    <AppShell>
-      <Suspense fallback={<RouteLoadingFallback />}>
-        <Routes>
-        {/* Core Public Website Routes */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/services" element={<ServicesPage />} />
-        <Route path="/faq" element={<FaqPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/get-started" element={<GetStartedPage />} />
+    <Suspense fallback={<RouteLoadingFallback />}>
+      <Routes>
+        {/* ========================================================= */}
+        {/* 1. PUBLIC MARKETING, LEGAL, AUTH & ONBOARDING ROUTES      */}
+        {/*    Wrapped in PublicLayout (Navbar + Footer)              */}
+        {/* ========================================================= */}
+        <Route element={<PublicLayout />}>
+          {/* Core Public Website */}
+          <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/services" element={<ServicesPage />} />
+          <Route path="/faq" element={<FaqPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/get-started" element={<GetStartedPage />} />
 
-        {/* Portal Information & Guides */}
-        <Route path="/for-patients" element={<PatientPortalInfoPage />} />
-        <Route path="/patient-portal" element={<Navigate to="/for-patients" replace />} />
-        <Route path="/patient-guide" element={<Navigate to="/for-patients" replace />} />
-        <Route path="/for-psychologists" element={<PsychologistPortalInfoPage />} />
-        <Route path="/psychologist-portal" element={<Navigate to="/for-psychologists" replace />} />
-        <Route path="/psychologist-guide" element={<Navigate to="/for-psychologists" replace />} />
-        <Route path="/admin-guide" element={<AdminGuidePage />} />
+          {/* Portal Information & Guides */}
+          <Route path="/for-patients" element={<PatientPortalInfoPage />} />
+          <Route path="/patient-portal" element={<Navigate to="/for-patients" replace />} />
+          <Route path="/patient-guide" element={<Navigate to="/for-patients" replace />} />
+          <Route path="/for-psychologists" element={<PsychologistPortalInfoPage />} />
+          <Route path="/psychologist-portal" element={<Navigate to="/for-psychologists" replace />} />
+          <Route path="/psychologist-guide" element={<Navigate to="/for-psychologists" replace />} />
+          <Route path="/admin-guide" element={<AdminGuidePage />} />
 
-        {/* Central Documentation Centre & Legal Routes */}
-        <Route path="/legal" element={<DocumentationCentrePage />} />
-        <Route path="/documentation" element={<Navigate to="/legal" replace />} />
-        <Route path="/privacy-policy" element={<PrivacyPage />} />
-        <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
-        <Route path="/terms" element={<TermsPage />} />
-        <Route path="/data-privacy" element={<DataPrivacyPage />} />
-        <Route path="/security-overview" element={<Navigate to="/data-privacy" replace />} />
-        <Route path="/cookie-policy" element={<CookiePolicyPage />} />
-        <Route path="/ai-transparency" element={<AiTransparencyPage />} />
-        <Route path="/medical-disclaimer" element={<MedicalDisclaimerPage />} />
-        <Route path="/data-retention" element={<DataRetentionPolicyPage />} />
-        <Route path="/acceptable-use" element={<AcceptableUsePage />} />
-        <Route path="/accessibility" element={<AccessibilityPage />} />
-        <Route path="/privacy-requests" element={<PrivacyRequestsPage />} />
+          {/* Central Documentation Centre & Legal Policies */}
+          <Route path="/legal" element={<DocumentationCentrePage />} />
+          <Route path="/documentation" element={<Navigate to="/legal" replace />} />
+          <Route path="/privacy-policy" element={<PrivacyPage />} />
+          <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/data-privacy" element={<DataPrivacyPage />} />
+          <Route path="/security-overview" element={<Navigate to="/data-privacy" replace />} />
+          <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+          <Route path="/ai-transparency" element={<AiTransparencyPage />} />
+          <Route path="/medical-disclaimer" element={<MedicalDisclaimerPage />} />
+          <Route path="/data-retention" element={<DataRetentionPolicyPage />} />
+          <Route path="/acceptable-use" element={<AcceptableUsePage />} />
+          <Route path="/accessibility" element={<AccessibilityPage />} />
+          <Route path="/privacy-requests" element={<PrivacyRequestsPage />} />
 
-        {/* Authentication & Onboarding Routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route
-          path="/onboarding"
-          element={
-            <ProtectedRoute allowUnonboarded={true}>
-              <OnboardingPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Authentication & Multi-Role Selection */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/workspace-select"
+            element={
+              <ProtectedRoute allowUnonboarded={true}>
+                <WorkspaceChooserPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/onboarding"
+            element={
+              <ProtectedRoute allowUnonboarded={true}>
+                <OnboardingPage />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Directory & Public Booking */}
-        <Route path="/find-psychologist" element={<PsychologistDirectoryPage />} />
-        <Route path="/book/:psychologistId" element={<BookingPage />} />
+          {/* Directory & Booking */}
+          <Route path="/find-psychologist" element={<PsychologistDirectoryPage />} />
+          <Route path="/book/:psychologistId" element={<BookingPage />} />
 
-        {/* Patient Protected Routes */}
-        <Route
-          path="/patient/intake"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['patient']}>
-                <PatientIntakePage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/patient/profile"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['patient']}>
-                <PatientProfilePage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/patient/dashboard"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['patient']}>
-                <PatientDashboard />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/patient/appointments"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['patient']}>
-                <PatientAppointmentsPage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/patient/care-plan"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['patient']}>
-                <PatientCarePlanPage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/patient/assessments/:assignmentId"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['patient']}>
-                <PatientAssessmentRunnerPage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
+          {/* Shared Authenticated Account Settings Redirect */}
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsRedirect />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/appointments"
+            element={
+              <ProtectedRoute>
+                <AppointmentsRedirect />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Psychologist Protected Routes */}
-        <Route
-          path="/psychologist/profile"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <PsychologistProfilePage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/psychologist/intake-settings"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <IntakeTemplateSettingsPage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/psychologist/dashboard"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <PsychologistDashboard />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/psychologist/practice-setup"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <PracticeSetupPage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/psychologist/appointments"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <PsychologistCalendarPage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/psychologist/calendar"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <PsychologistCalendarPage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/calendar"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <PsychologistCalendarPage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/psychologist/availability"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <AvailabilitySettingsPage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        {/* Phase 4 Clinical Routes */}
-        <Route
-          path="/psychologist/patients"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <PatientDirectoryPage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/psychologist/patients/:patientId"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <PatientChartPage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/psychologist/sessions/appointment/:appointmentId"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <SessionWorkspacePage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/psychologist/sessions/:sessionId"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <SessionWorkspacePage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/psychologist/sessions/:sessionId/transcript"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <TranscriptStudioPage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/psychologist/treatment-plans"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <TreatmentPlansPage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/psychologist/reports"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['psychologist']}>
-                <ReportsPage />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
+          {/* Obsolete / Deprecated Route Redirections */}
+          <Route
+            path="/clinical/reports"
+            element={
+              <ProtectedRoute>
+                <Navigate to="/psychologist/reports" replace />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Admin Protected Routes */}
-        <Route
-          path="/admin/dashboard"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRoles={['admin']}>
-                <AdminDashboard />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
-        />
+          {/* Catch-all 404 */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
 
-        {/* Shared Authenticated Routes */}
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <SettingsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/appointments"
-          element={
-            <ProtectedRoute>
-              <AppointmentsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/notes"
-          element={
-            <ProtectedRoute>
-              <ClinicalNotesPage />
-            </ProtectedRoute>
-          }
-        />
+        {/* ========================================================= */}
+        {/* 2. AUTHENTICATED PATIENT WORKSPACE                       */}
+        {/*    Wrapped in PatientLayout (Persistent Portal Nav)       */}
+        {/* ========================================================= */}
+        <Route element={<PatientLayout />}>
+          <Route
+            path="/patient/dashboard"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['patient']}>
+                  <PatientDashboard />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/intake"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['patient']}>
+                  <PatientIntakePage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/profile"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['patient']}>
+                  <PatientProfilePage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/appointments"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['patient']}>
+                  <PatientAppointmentsPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/care-plan"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['patient']}>
+                  <PatientCarePlanPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/assessments/:assignmentId"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['patient']}>
+                  <PatientAssessmentRunnerPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/settings"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['patient']}>
+                  <SettingsPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/patient/*" element={<NotFoundPage />} />
+        </Route>
 
-        {/* Shortcuts */}
+        {/* ========================================================= */}
+        {/* 3. AUTHENTICATED CLINICAL WORKSPACE                      */}
+        {/*    Wrapped in PsychologistLayout (Clinical Nav & Tools)   */}
+        {/* ========================================================= */}
+        <Route element={<PsychologistLayout />}>
+          <Route
+            path="/psychologist/dashboard"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <PsychologistDashboard />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/profile"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <PsychologistProfilePage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/intake-settings"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <IntakeTemplateSettingsPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/practice-setup"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <PracticeSetupPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/appointments"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <PsychologistCalendarPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/calendar"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <PsychologistCalendarPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <PsychologistCalendarPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/availability"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <AvailabilitySettingsPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/patients"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <PatientDirectoryPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/patients/:patientId"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <PatientChartPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/sessions/appointment/:appointmentId"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <SessionWorkspacePage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/sessions/:sessionId"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <SessionWorkspacePage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/sessions/:sessionId/transcript"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <TranscriptStudioPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/transcripts"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <TranscriptStudioPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/treatment-plans"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <TreatmentPlansPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/reports"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <ReportsPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notes"
+            element={
+              <ProtectedRoute>
+                <ClinicalNotesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/psychologist/settings"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['psychologist']}>
+                  <SettingsPage />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/psychologist/*" element={<NotFoundPage />} />
+        </Route>
+
+        {/* ========================================================= */}
+        {/* 4. AUTHENTICATED SYSTEM GOVERNANCE (ADMIN)               */}
+        {/*    Wrapped in AdminLayout (Governance & Lockout Nav)      */}
+        {/* ========================================================= */}
+        <Route element={<AdminLayout />}>
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <RoleRoute allowedRoles={['admin']}>
+                  <AdminDashboard />
+                </RoleRoute>
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
+        {/* Role Base Route Shortcuts */}
         <Route path="/patient" element={<Navigate to="/patient/dashboard" replace />} />
         <Route path="/psychologist" element={<Navigate to="/psychologist/dashboard" replace />} />
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-
-        {/* Catch-all 404 */}
-        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
-  </AppShell>
   );
 }
